@@ -26,18 +26,48 @@ npm run dev
 
 ```txt
 .
-├── electron/
-│   ├── main.js
-│   └── preload.js
-├── src/
-│   ├── components/
-│   │   └── GameCanvas.jsx
-│   ├── App.jsx
-│   ├── main.jsx
-│   └── styles.css
-├── index.html
-├── package.json
-└── vite.config.js
+New-World-Online-Framework
+├─ electron
+│  ├─ main.js
+│  └─ preload.js
+├─ index.html
+├─ package-lock.json
+├─ package.json
+├─ PROJECT_DOCUMENTATION.md
+├─ README.md
+├─ src
+│  ├─ App.jsx
+│  ├─ components
+│  │  ├─ GameCanvas.jsx
+│  │  └─ InventoryPanel.jsx
+│  ├─ data
+│  │  ├─ gameData.js
+│  │  ├─ items
+│  │  │  ├─ consumables.json
+│  │  │  ├─ keys.json
+│  │  │  └─ tools.json
+│  │  ├─ items.json
+│  │  ├─ mapConfig.json
+│  │  ├─ modelCatalog.json
+│  │  ├─ objectLogic.json
+│  │  ├─ scenes
+│  │  │  ├─ crystal-gate.json
+│  │  │  ├─ mystic-hills.json
+│  │  │  ├─ scenes.json
+│  │  │  └─ starter-valley.json
+│  │  └─ worldData.json
+│  ├─ game
+│  │  ├─ camera.js
+│  │  └─ inventory.js
+│  ├─ logic
+│  │  └─ devPanelLogic.js
+│  ├─ main.jsx
+│  ├─ models
+│  │  └─ devPanelModel.js
+│  ├─ scenes
+│  │  └─ sceneLoader.js
+│  └─ styles.css
+└─ vite.config.js
 ```
 
 ## Notes
