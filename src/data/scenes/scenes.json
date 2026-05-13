@@ -1,0 +1,8 @@
+{
+  "defaultScene": "starter-valley",
+  "scenes": {
+    "starter-valley": "./starter-valley.json",
+    "crystal-gate": "./crystal-gate.json",
+    "mystichills": "./mystic-hills.json"
+  }
+}

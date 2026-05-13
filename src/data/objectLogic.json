@@ -1,0 +1,122 @@
+{
+  "schemaVersion": 1,
+  "items": [
+    {
+      "id": "potion_health",
+      "type": "consumable",
+      "name": "Health Potion",
+      "description": "Restores 50 HP",
+      "stackable": true,
+      "maxStack": 10,
+      "logic": {
+        "onUse": {
+          "effect": "restore_stat",
+          "stat": "health",
+          "value": 50,
+          "consumeOnUse": true
+        }
+      }
+    },
+    {
+      "id": "bomb_small",
+      "type": "tool",
+      "name": "Small Bomb",
+      "description": "Deals splash damage",
+      "stackable": true,
+      "maxStack": 5,
+      "logic": {
+        "onUse": {
+          "effect": "splash_damage",
+          "damage": 40,
+          "radius": 3,
+          "consumeOnUse": true
+        }
+      }
+    },
+    {
+      "id": "key_bronze",
+      "type": "key",
+      "name": "Bronze Key",
+      "description": "Opens old doors",
+      "stackable": false,
+      "maxStack": 1,
+      "logic": {
+        "onUse": {
+          "effect": "unlock",
+          "targetTag": "bronze_lock",
+          "consumeOnUse": false
+        }
+      }
+    }
+  ],
+  "worldObjects": [
+    {
+      "id": "crate-01",
+      "objectType": "crate",
+      "interactable": true,
+      "logic": {
+        "onInteract": {
+          "action": "breakable_loot",
+          "drops": [
+            { "itemId": "potion_health", "chance": 0.2, "quantity": [1, 1] },
+            { "itemId": "bomb_small", "chance": 0.15, "quantity": [1, 1] }
+          ]
+        }
+      }
+    },
+    {
+      "id": "stone-01",
+      "objectType": "standingStone",
+      "interactable": true,
+      "logic": {
+        "onInteract": {
+          "action": "grant_buff",
+          "buffId": "focus_of_vale",
+          "durationSeconds": 120
+        }
+      }
+    },
+    {
+      "id": "campfire-01",
+      "objectType": "campfire",
+      "interactable": true,
+      "logic": {
+        "onInteract": {
+          "action": "rest",
+          "restore": {
+            "health": 20,
+            "stamina": 20,
+            "magicka": 20
+          }
+        }
+      }
+    },
+    {
+      "id": "chest-01",
+      "objectType": "chest",
+      "interactable": true,
+      "state": {
+        "isLocked": true,
+        "requiredKeyId": "key_bronze",
+        "isOpened": false,
+        "isLooted": false
+      },
+      "logic": {
+        "onInteract": {
+          "action": "open_chest",
+          "flow": [
+            "if_locked_require_key",
+            "play_open_animation",
+            "roll_loot_table",
+            "mark_looted"
+          ]
+        },
+        "lootTable": [
+          { "itemId": "potion_health", "chance": 0.9, "quantity": [1, 2] },
+          { "itemId": "bomb_small", "chance": 0.6, "quantity": [1, 2] },
+          { "itemId": "key_bronze", "chance": 0.1, "quantity": [1, 1] }
+        ]
+      }
+    }
+  ]
+}

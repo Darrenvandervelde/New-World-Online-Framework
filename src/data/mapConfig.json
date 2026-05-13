@@ -1,0 +1,37 @@
+{
+  "defaultScene": "starter-valley",
+  "sceneOrder": ["starter-valley", "crystal-gate"],
+  "completion": {
+    "starter-valley": false,
+    "crystal-gate": false
+  },
+  "portals": {
+    "starter-valley": [
+      {
+        "id": "starter-to-crystal",
+        "position": [9, 1, -4],
+        "size": [1.8, 0.2, 1.8],
+        "targetScene": "crystal-gate",
+        "prompt": "Press E to enter Crystal Gate"
+      }
+    ],
+    "crystal-gate": [
+      {
+        "id": "crystal-to-starter",
+        "position": [0, 1, 8],
+        "size": [1.8, 0.2, 1.8],
+        "targetScene": "mystic-hills",
+        "prompt": "Press E to return to Mystic-hills"
+      }
+    ],
+    "mystic-hills": [
+      {
+        "id": "crystal-to-mystic",
+        "position": [12, 1, -10],
+        "size": [1.8, 0.2, 1.8],
+        "targetScene": "starter-valley",
+        "prompt": "Press E to enter Starter Valley"
+      }
+    ]
+  }
+}

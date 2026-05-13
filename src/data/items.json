@@ -1,0 +1,20 @@
+[
+  {
+    "id": "potion_health",
+    "name": "Health Potion",
+    "description": "Restores 50 HP",
+    "quantity": 3
+  },
+  {
+    "id": "bomb_small",
+    "name": "Small Bomb",
+    "description": "Deals splash damage",
+    "quantity": 2
+  },
+  {
+    "id": "key_bronze",
+    "name": "Bronze Key",
+    "description": "Opens old doors",
+    "quantity": 1
+  }
+]

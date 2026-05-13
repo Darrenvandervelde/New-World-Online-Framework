@@ -1,0 +1,34 @@
+{
+  "factions": [
+    { "id": "wardens", "name": "Wardens of the Vale", "reputation": "Neutral" },
+    { "id": "iron-syndicate", "name": "Iron Syndicate", "reputation": "Wary" },
+    { "id": "circle-of-mages", "name": "Circle of Mages", "reputation": "Trusted" }
+  ],
+  "quests": [
+    {
+      "id": "main-awakening",
+      "title": "Awakening in Emberfall",
+      "stage": "Find the standing stone and attune your sigil.",
+      "status": "Active"
+    },
+    {
+      "id": "side-smoke",
+      "title": "Smoke Over the Ridge",
+      "stage": "Investigate the abandoned campfire near the eastern road.",
+      "status": "Available"
+    }
+  ],
+  "player": {
+    "archetype": "Spellblade",
+    "attributes": {
+      "health": 120,
+      "magicka": 90,
+      "stamina": 110
+    },
+    "skills": [
+      { "id": "one-handed", "name": "One-Handed", "level": 18 },
+      { "id": "destruction", "name": "Destruction", "level": 22 },
+      { "id": "smithing", "name": "Smithing", "level": 12 }
+    ]
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "scene": {
+    "name": "mystic-hills",
+    "spawn": [0, 1.6, 6],
+    "renderDistance": 28
+  },
+  "areas": [
+    { "id": "03-center", "position": [0, 0, 0], "size": [18, 0.5, 18], "color": "green" },
+    { "id": "03-east", "position": [18, 0, 0], "size": [18, 0.5, 18], "color": "green" },
+    { "id": "03-west", "position": [-18, 0, 0], "size": [18, 0.5, 18], "color": "green" },
+    { "id": "03-north", "position": [0, 0, -18], "size": [18, 0.5, 18], "color": "green" },
+    { "id": "03-south", "position": [0, 0, 18], "size": [18, 0.5, 18], "color": "green" }
+  ],
+  "objects": [
+    { "id": "crystal-03", "modelId": "standingStone", "position": [2, 1, 0], "rotation": [0, 0.2, 0], "scale": [1.5, 1.6, 1.5] },
+    { "id": "crystal-04", "modelId": "standingStone", "position": [-3, 1, -3], "rotation": [0, 1.4, 0], "scale": [1.2, 1.3, 1.2] },
+    { "id": "campfire-02", "modelId": "campfire", "position": [5, 0.35, 4], "rotation": [0, 0, 0], "scale": [1, 1, 1] }
+  ]
+}

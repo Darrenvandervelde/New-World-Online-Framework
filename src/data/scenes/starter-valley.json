@@ -1,0 +1,20 @@
+{
+  "scene": {
+    "name": "starter-valley",
+    "spawn": [0, 1.6, 6],
+    "renderDistance": 26
+  },
+  "areas": [
+    { "id": "center", "position": [0, 0, 0], "size": [16, 0.5, 16], "color": "#1e293b" },
+    { "id": "east", "position": [16, 0, 0], "size": [16, 0.5, 16], "color": "#334155" },
+    { "id": "west", "position": [-16, 0, 0], "size": [16, 0.5, 16], "color": "#334155" },
+    { "id": "north", "position": [0, 0, -16], "size": [16, 0.5, 16], "color": "#475569" },
+    { "id": "south", "position": [0, 0, 16], "size": [16, 0.5, 16], "color": "#475569" }
+  ],
+  "objects": [
+    { "id": "crate-01", "modelId": "crate", "position": [3, 0.5, -2], "rotation": [0, 0.4, 0], "scale": [1, 1, 1] },
+    { "id": "stone-01", "modelId": "standingStone", "position": [-3, 1, -6], "rotation": [0, 1.2, 0], "scale": [1.25, 1.25, 1.25] },
+    { "id": "campfire-01", "modelId": "campfire", "position": [7, 0.35, 5], "rotation": [0, 0, 0], "scale": [1, 1, 1] },
+    { "id": "chest-01", "modelId": "crate", "position": [-7, 0.5, 4], "rotation": [0, 0.2, 0], "scale": [1.1, 1, 1] }
+  ]
+}

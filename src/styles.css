@@ -1,0 +1,250 @@
+:root {
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: #f1f5f9;
+  background: #020617;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.menu-screen,
+.game-screen {
+  width: 100%;
+  height: 100%;
+}
+
+.menu-screen {
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: radial-gradient(circle at top, #14243f 0%, #020617 60%);
+}
+
+.menu-card {
+  width: min(480px, 100%);
+  border: 1px solid #334155;
+  border-radius: 14px;
+  padding: 1.5rem;
+  background: rgba(10, 17, 35, 0.95);
+}
+
+.primary-btn,
+.hud-btn {
+  border-radius: 10px;
+  border: 1px solid #3b82f6;
+  background: #2563eb;
+  color: #f8fafc;
+  padding: 0.6rem 0.9rem;
+  cursor: pointer;
+}
+
+.hud-btn {
+  border-color: #475569;
+  background: #0f172a;
+}
+
+.game-screen {
+  position: relative;
+  overflow: hidden;
+}
+
+.game-canvas {
+  width: 100vw;
+  height: 100vh;
+}
+
+.game-hud {
+  position: absolute;
+  top: 6.5rem;
+  left: 1rem;
+  display: flex;
+  gap: 0.5rem;
+  z-index: 2;
+}
+
+.healthbar-panel {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  z-index: 2;
+  width: 290px;
+  border: 1px solid #7f1d1d;
+  border-radius: 10px;
+  background: rgba(69, 10, 10, 0.9);
+  padding: 0.75rem;
+}
+
+.healthbar-panel h3,
+.healthbar-panel p {
+  margin: 0 0 0.5rem;
+}
+
+.healthbar-track {
+  width: 100%;
+  height: 14px;
+  border-radius: 999px;
+  background: #1f2937;
+  overflow: hidden;
+  border: 1px solid #991b1b;
+  margin-bottom: 0.5rem;
+}
+
+.healthbar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ef4444, #b91c1c);
+}
+
+.popup-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.7);
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  z-index: 3;
+}
+
+.popup-card {
+  width: min(700px, 100%);
+  max-height: 85vh;
+  overflow: auto;
+  border: 1px solid #334155;
+  border-radius: 14px;
+  background: #0b1224;
+  padding: 1rem;
+}
+
+.popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.popup-header h2,
+.exit-menu-card h2 {
+  margin: 0;
+}
+
+.inventory-panel {
+  border: 1px solid #1e293b;
+  border-radius: 12px;
+  background: #0b1224;
+  padding: 0.75rem;
+}
+
+.inventory-panel h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}
+
+.inventory-panel ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.inventory-panel li {
+  border: 1px solid #24314a;
+  border-radius: 8px;
+  padding: 0.5rem;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.inventory-panel li span,
+.menu-card p,
+.exit-menu-card p {
+  color: #94a3b8;
+}
+
+.menu-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.dev-panel {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 2;
+  width: 220px;
+  border: 1px solid #334155;
+  border-radius: 10px;
+  background: rgba(11, 18, 36, 0.9);
+  padding: 0.75rem;
+  font-size: 0.85rem;
+}
+
+.dev-panel h3 {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+}
+
+.dev-panel p {
+  margin: 0.2rem 0;
+  color: #cbd5e1;
+}
+
+.settings-panel {
+  position: absolute;
+  bottom: 1rem;
+  right: 1rem;
+  z-index: 2;
+  width: 260px;
+  border: 1px solid #334155;
+  border-radius: 10px;
+  background: rgba(11, 18, 36, 0.9);
+  padding: 0.75rem;
+  font-size: 0.85rem;
+}
+
+.settings-panel h3 {
+  margin: 0 0 0.5rem;
+}
+
+.settings-panel ul {
+  margin: 0;
+  padding-left: 1rem;
+  color: #cbd5e1;
+}
+
+.journal-panel {
+  position: absolute;
+  left: 1rem;
+  bottom: 1rem;
+  z-index: 2;
+  width: 290px;
+  border: 1px solid #334155;
+  border-radius: 10px;
+  background: rgba(11, 18, 36, 0.9);
+  padding: 0.75rem;
+  font-size: 0.85rem;
+}
+
+.journal-panel h3 {
+  margin: 0 0 0.6rem;
+}
+
+.journal-section h4 {
+  margin: 0.45rem 0;
+  color: #f1f5f9;
+}
+
+.journal-section ul {
+  margin: 0;
+  padding-left: 1rem;
+  color: #cbd5e1;
+}

@@ -1,0 +1,8 @@
+[
+  {
+    "id": "potion_health",
+    "name": "Health Potion",
+    "description": "Restores 50 HP",
+    "quantity": 3
+  }
+]

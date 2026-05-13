@@ -1,0 +1,8 @@
+[
+  {
+    "id": "bomb_small",
+    "name": "Small Bomb",
+    "description": "Deals splash damage",
+    "quantity": 2
+  }
+]

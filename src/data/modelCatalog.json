@@ -1,0 +1,16 @@
+{
+  "models": {
+    "crate": {
+      "gltf": "/models/crate.glb",
+      "fallbackColor": "#f59e0b"
+    },
+    "standingStone": {
+      "gltf": "/models/standing-stone.glb",
+      "fallbackColor": "#64748b"
+    },
+    "campfire": {
+      "gltf": "/models/campfire.glb",
+      "fallbackColor": "#ef4444"
+    }
+  }
+}
