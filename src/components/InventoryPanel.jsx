@@ -5,6 +5,7 @@ export default function InventoryPanel({ items }) {
       <ul>
         {items.map((item) => (
           <li key={item.id}>
+            <span aria-hidden="true">{item.name?.[0] ?? '?'}</span>
             <strong>{item.name}</strong> x{item.quantity}
             <span>{item.description}</span>
           </li>

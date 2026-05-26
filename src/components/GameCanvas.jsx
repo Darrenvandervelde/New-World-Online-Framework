@@ -16,7 +16,7 @@ import { createDevPanelSnapshot } from '../models/devPanelModel';
 
 const MOVE_KEYS = ['W / ArrowUp', 'S / ArrowDown', 'A / ArrowLeft', 'D / ArrowRight', 'Space (Jump)', 'Shift (Sprint)', 'E (Use portal)', 'Esc (Unlock pointer)'];
 
-export default function GameCanvas({ gameData, onEscape }) {
+export default function GameCanvas({ gameData, inventory, onEscape }) {
   const mountRef = useRef(null);
   const [devStats, setDevStats] = useState(() => createDevPanelSnapshot());
   const [playerState, setPlayerState] = useState({ x: 0, y: 1.6, z: 0, canJump: true });
@@ -80,9 +80,13 @@ export default function GameCanvas({ gameData, onEscape }) {
       setSceneReady(true);
     }
 
+    const collectibleNodes = [];
+
     sceneConfig.objects.forEach((obj) => {
       const modelDef = modelCatalog.models[obj.modelId];
       if (!modelDef?.gltf) return;
+      const logicDef = objectLogicById.get(obj.id);
+      const candidateDrop = logicDef?.logic?.lootTable?.[0]?.itemId ?? logicDef?.logic?.onInteract?.drops?.[0]?.itemId ?? null;
 
       gltfLoader.load(
         modelDef.gltf,
@@ -92,6 +96,7 @@ export default function GameCanvas({ gameData, onEscape }) {
           model.rotation.set(...obj.rotation);
           model.scale.fromArray(obj.scale);
           objectsGroup.add(model);
+          if (candidateDrop) collectibleNodes.push({ id: obj.id, mesh: model, itemId: candidateDrop, picked: false });
           markLoadDone();
         },
         undefined,
@@ -102,6 +107,7 @@ export default function GameCanvas({ gameData, onEscape }) {
           );
           fallback.position.fromArray(obj.position);
           objectsGroup.add(fallback);
+          if (candidateDrop) collectibleNodes.push({ id: obj.id, mesh: fallback, itemId: candidateDrop, picked: false });
           markLoadDone();
         }
       );
@@ -170,6 +176,16 @@ export default function GameCanvas({ gameData, onEscape }) {
         }
       }
 
+      collectibleNodes.forEach((node) => {
+        if (node.picked) return;
+        if (node.mesh.position.distanceTo(camera.position) > 2.1) return;
+        const result = inventory?.addItem(node.itemId, 1);
+        if (!result || result.added < 1) return;
+        node.picked = true;
+        node.mesh.visible = false;
+        setSettingMessage(`Picked up ${node.itemId}`);
+      });
+
       setPortalPrompt(activePortal ? activePortal.prompt : '');
       renderer.render(scene, camera);
 
@@ -232,7 +248,7 @@ export default function GameCanvas({ gameData, onEscape }) {
       renderer.dispose();
       mount.removeChild(renderer.domElement);
     };
-  }, [activeSceneName, onEscape, portals, sceneConfig]);
+  }, [activeSceneName, inventory, objectLogicById, onEscape, portals, sceneConfig]);
 
   return (
     <>

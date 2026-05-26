@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import GameCanvas from './components/GameCanvas';
 import InventoryPanel from './components/InventoryPanel';
 import worldData from './data/worldData.json';
@@ -7,7 +7,9 @@ import { createInventory } from './game/inventory';
 
 export default function App() {
   const inventory = useMemo(() => createInventory(gameData.inventoryItems), []);
-  const items = inventory.getItems();
+  const [inventoryState, setInventoryState] = useState(() => inventory.getSnapshot());
+
+  useEffect(() => inventory.subscribe(setInventoryState), [inventory]);
 
   const [screen, setScreen] = useState('menu');
   const [showInventory, setShowInventory] = useState(false);
@@ -53,7 +55,11 @@ export default function App() {
 
   return (
     <main className="game-screen">
-      <GameCanvas gameData={gameData} onEscape={() => setShowPauseMenu((current) => !current)} />
+      <GameCanvas
+        gameData={gameData}
+        inventory={inventory}
+        onEscape={() => setShowPauseMenu((current) => !current)}
+      />
 
       <aside className="healthbar-panel" aria-label="Health bar">
         <h3>Health</h3>
@@ -123,7 +129,7 @@ export default function App() {
                 Close
               </button>
             </div>
-            <InventoryPanel items={items} />
+            <InventoryPanel items={inventoryState.slots} />
           </div>
         </div>
       )}
