@@ -41,6 +41,12 @@ body,
   background: rgba(10, 17, 35, 0.95);
 }
 
+.menu-card h1 {
+  Padding: 12px;
+  margin: 6px;
+  color: linear-gradient(90deg,#020617,#5c689d);
+}
+
 .primary-btn,
 .hud-btn {
   border-radius: 10px;
