@@ -30,10 +30,11 @@ body,
 }
 
 .menu-card {
-  width: min(480px, 100%);
+  /*width: min(480px, 100%);*/
+  width: min(600px, 100%);
   border: 1px solid #334155;
   border-radius: 14px;
-  padding: 1.5rem;
+  padding: 2rem; /* Change from 1.5 to 2 rem*/
   background: rgba(10, 17, 35, 0.95);
 }
 
