@@ -4,13 +4,9 @@
   background: #020617;
 }
 
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
-html,
-body,
-#root {
+html, body, #root {
   margin: 0;
   width: 100%;
   height: 100%;
@@ -30,21 +26,25 @@ body,
 }
 
 .menu-card {
-  /*width: min(480px, 100%);*/
   width: min(600px, 100%);
-  justify-content: center;
-  justify-items: center;
   text-align: center;
   border: 1px solid #334155;
   border-radius: 14px;
-  padding: 2rem; /* Change from 1.5 to 2 rem*/
+  padding: 2rem;
   background: rgba(10, 17, 35, 0.95);
 }
 
+.menu-card .eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.75rem;
+  color: #38bdf8;
+  margin: 0 0 0.5rem;
+}
+
 .menu-card h1 {
-  Padding: 12px;
-  margin: 6px;
-  color: linear-gradient(90deg,#020617,#5c689d);
+  margin: 0.25rem 0 0.75rem;
+  font-size: 2rem;
 }
 
 .primary-btn,
@@ -74,9 +74,10 @@ body,
 
 .game-hud {
   position: absolute;
-  top: 6.5rem;
+  top: 7.5rem;
   left: 1rem;
   display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
   z-index: 2;
 }
@@ -87,31 +88,45 @@ body,
   left: 1rem;
   z-index: 2;
   width: 290px;
-  border: 1px solid #7f1d1d;
+  border: 1px solid #334155;
   border-radius: 10px;
-  background: rgba(69, 10, 10, 0.9);
+  background: rgba(11, 18, 36, 0.92);
   padding: 0.75rem;
 }
 
 .healthbar-panel h3,
 .healthbar-panel p {
-  margin: 0 0 0.5rem;
+  margin: 0 0 0.4rem;
 }
 
-.healthbar-track {
+.bar-label {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  margin-bottom: 0.2rem;
+}
+
+.healthbar-track,
+.staminabar-track {
   width: 100%;
-  height: 14px;
+  height: 12px;
   border-radius: 999px;
   background: #1f2937;
   overflow: hidden;
-  border: 1px solid #991b1b;
-  margin-bottom: 0.5rem;
+  border: 1px solid #374151;
+  margin-bottom: 0.35rem;
 }
 
 .healthbar-fill {
   height: 100%;
   background: linear-gradient(90deg, #ef4444, #b91c1c);
 }
+
+.staminabar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #22c55e, #15803d);
+}
+
+.muted { color: #94a3b8; font-size: 0.8rem; }
 
 .popup-overlay {
   position: absolute;
@@ -141,9 +156,7 @@ body,
 }
 
 .popup-header h2,
-.exit-menu-card h2 {
-  margin: 0;
-}
+.exit-menu-card h2 { margin: 0; }
 
 .inventory-panel {
   border: 1px solid #1e293b;
@@ -175,14 +188,14 @@ body,
 
 .inventory-panel li span,
 .menu-card p,
-.exit-menu-card p {
-  color: #94a3b8;
-}
+.exit-menu-card p { color: #94a3b8; }
 
 .menu-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.75rem;
   margin-top: 1rem;
+  justify-content: center;
 }
 
 .dev-panel {
@@ -198,15 +211,8 @@ body,
   font-size: 0.85rem;
 }
 
-.dev-panel h3 {
-  margin: 0 0 0.5rem;
-  font-size: 0.95rem;
-}
-
-.dev-panel p {
-  margin: 0.2rem 0;
-  color: #cbd5e1;
-}
+.dev-panel h3 { margin: 0 0 0.5rem; font-size: 0.95rem; }
+.dev-panel p { margin: 0.2rem 0; color: #cbd5e1; }
 
 .settings-panel {
   position: absolute;
@@ -221,10 +227,7 @@ body,
   font-size: 0.85rem;
 }
 
-.settings-panel h3 {
-  margin: 0 0 0.5rem;
-}
-
+.settings-panel h3 { margin: 0 0 0.5rem; }
 .settings-panel ul {
   margin: 0;
   padding-left: 1rem;
@@ -236,7 +239,9 @@ body,
   left: 1rem;
   bottom: 1rem;
   z-index: 2;
-  width: 290px;
+  width: 300px;
+  max-height: 40vh;
+  overflow: auto;
   border: 1px solid #334155;
   border-radius: 10px;
   background: rgba(11, 18, 36, 0.9);
@@ -244,17 +249,61 @@ body,
   font-size: 0.85rem;
 }
 
-.journal-panel h3 {
-  margin: 0 0 0.6rem;
-}
-
-.journal-section h4 {
-  margin: 0.45rem 0;
-  color: #f1f5f9;
-}
-
+.journal-panel h3 { margin: 0 0 0.6rem; }
+.journal-section h4 { margin: 0.45rem 0; color: #f1f5f9; }
 .journal-section ul {
   margin: 0;
   padding-left: 1rem;
   color: #cbd5e1;
+}
+
+.minimap-panel {
+  position: absolute;
+  top: 1rem;
+  right: 15.5rem;
+  z-index: 2;
+  width: 140px;
+  border: 1px solid #334155;
+  border-radius: 10px;
+  background: rgba(11, 18, 36, 0.9);
+  padding: 0.6rem;
+  font-size: 0.8rem;
+}
+
+.minimap-panel h3 { margin: 0 0 0.4rem; font-size: 0.85rem; }
+
+.minimap-grid {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  background:
+    linear-gradient(rgba(51, 65, 85, 0.5) 1px, transparent 1px) 0 0 / 20% 20%,
+    linear-gradient(90deg, rgba(51, 65, 85, 0.5) 1px, transparent 1px) 0 0 / 20% 20%,
+    #0f172a;
+  border: 1px solid #1e293b;
+  overflow: hidden;
+}
+
+.minimap-player {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  margin: -4px 0 0 -4px;
+  border-radius: 50%;
+  background: #38bdf8;
+  box-shadow: 0 0 8px #38bdf8;
+}
+
+.toast {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 5;
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid #38bdf8;
+  border-radius: 10px;
+  padding: 0.75rem 1.25rem;
+  pointer-events: none;
 }
