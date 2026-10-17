@@ -20,6 +20,10 @@ const MOVE_KEYS = [
   'Esc — Pause / unlock'
 ];
 
+/**
+ * Framework demo canvas. Creates ONE WebGL context for the component lifetime.
+ * Parent callbacks are read from refs so React re-renders do not rebuild the world.
+ */
 export default function GameCanvas({
   inventory,
   onEscape,
@@ -29,6 +33,18 @@ export default function GameCanvas({
   spawn = { x: 8, y: 1.7, z: 8 }
 }) {
   const mountRef = useRef(null);
+  const inventoryRef = useRef(inventory);
+  const onEscapeRef = useRef(onEscape);
+  const onPlayerUpdateRef = useRef(onPlayerUpdate);
+  const onTimeUpdateRef = useRef(onTimeUpdate);
+  const onSaveRequestRef = useRef(onSaveRequest);
+
+  inventoryRef.current = inventory;
+  onEscapeRef.current = onEscape;
+  onPlayerUpdateRef.current = onPlayerUpdate;
+  onTimeUpdateRef.current = onTimeUpdate;
+  onSaveRequestRef.current = onSaveRequest;
+
   const [devStats, setDevStats] = useState(() => createDevPanelSnapshot());
   const [hud, setHud] = useState({
     x: spawn.x,
@@ -43,20 +59,25 @@ export default function GameCanvas({
   });
   const [ready, setReady] = useState(false);
 
+  // Mount WebGL once — do not depend on parent callbacks
   useEffect(() => {
     const mount = mountRef.current;
-    if (!mount) return;
+    if (!mount) return undefined;
+
+    let disposed = false;
+    let animationId = 0;
+    let uiAccum = 0;
 
     const scene = new THREE.Scene();
     scene.fog = new THREE.FogExp2(0x87b5ff, 0.012);
 
-    const camera = createCamera(mount.clientWidth, mount.clientHeight);
+    const camera = createCamera(mount.clientWidth || 800, mount.clientHeight || 600);
     const ground = heightAt(spawn.x, spawn.z);
     camera.position.set(spawn.x, ground + 1.7, spawn.z);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setSize(mount.clientWidth, mount.clientHeight);
+    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setSize(mount.clientWidth || 800, mount.clientHeight || 600);
     renderer.shadowMap.enabled = true;
     mount.appendChild(renderer.domElement);
 
@@ -65,16 +86,11 @@ export default function GameCanvas({
 
     const hemi = new THREE.HemisphereLight(0xbcd4ff, 0x1f2937, 0.55);
     scene.add(hemi);
-
     const sun = new THREE.DirectionalLight(0xffffff, 1.2);
     sun.position.set(40, 60, 20);
-    sun.castShadow = true;
     scene.add(sun);
+    scene.add(new THREE.AmbientLight(0x334155, 0.25));
 
-    const ambient = new THREE.AmbientLight(0x334155, 0.25);
-    scene.add(ambient);
-
-    // Origin marker
     const marker = new THREE.Mesh(
       new THREE.CylinderGeometry(0.4, 0.5, 0.2, 12),
       new THREE.MeshStandardMaterial({ color: '#f59e0b', emissive: '#b45309', emissiveIntensity: 0.3 })
@@ -86,23 +102,18 @@ export default function GameCanvas({
     const chunkRoot = new THREE.Group();
     scene.add(chunkRoot);
 
-    const timeSystem = createTimeSystem({
-      startHours: 8,
-      dayLengthSeconds: 480
-    });
-
+    const timeSystem = createTimeSystem({ startHours: 8, dayLengthSeconds: 480 });
     const clock = new THREE.Clock();
     const devCollector = createDevPanelCollector(renderer);
-    let animationId;
-    let message = 'Click canvas to explore the open world';
+    let message = 'Click canvas to look around and move';
 
     const loadChunk = (cx, cz) => {
       const terrain = createChunkMesh(cx, cz, 64, 20);
-      const props = createWorldProps(cx, cz, 64, 7);
+      const props = createWorldProps(cx, cz, 64, 5);
       const group = new THREE.Group();
       group.add(terrain, props);
       chunkRoot.add(group);
-      chunkManager.markLoaded(cx, cz, { group, terrain, props });
+      chunkManager.markLoaded(cx, cz, { group });
     };
 
     const unloadChunk = ({ data }) => {
@@ -117,22 +128,21 @@ export default function GameCanvas({
       });
     };
 
-    // Initial chunks
     const initial = chunkManager.update(camera.position.x, camera.position.z);
     initial.toLoad.forEach(({ cx, cz }) => loadChunk(cx, cz));
     setReady(true);
 
     const render = () => {
+      if (disposed) return;
       const delta = Math.min(clock.getDelta(), 0.05);
       const playerSnap = player.update(delta);
       const timeSnap = timeSystem.update(delta);
 
       scene.background = new THREE.Color(timeSnap.skyColor);
-      scene.fog.color.set(timeSnap.skyColor);
+      if (scene.fog) scene.fog.color.set(timeSnap.skyColor);
       sun.intensity = timeSnap.sunIntensity;
       hemi.intensity = timeSnap.phase === 'night' ? 0.2 : 0.55;
 
-      // Sun path
       const t = (timeSnap.hours / 24) * Math.PI * 2;
       sun.position.set(Math.cos(t) * 80, Math.sin(t) * 60 + 20, Math.sin(t * 0.5) * 40);
 
@@ -140,7 +150,6 @@ export default function GameCanvas({
       stream.toLoad.forEach(({ cx, cz }) => loadChunk(cx, cz));
       stream.toUnload.forEach(unloadChunk);
 
-      // Collect nearby crystals
       chunkRoot.traverse((obj) => {
         if (!obj.userData?.collectible || obj.userData.picked) return;
         const wp = new THREE.Vector3();
@@ -148,34 +157,40 @@ export default function GameCanvas({
         if (wp.distanceTo(camera.position) < 2.2) {
           obj.userData.picked = true;
           obj.visible = false;
-          inventory?.addItem?.('crystal-shard', 1);
+          inventoryRef.current?.addItem?.('crystal-shard', 1);
           message = 'Collected crystal shard';
         }
       });
 
       renderer.render(scene, camera);
 
-      const hudState = {
-        ...playerSnap.position,
-        stamina: playerSnap.stamina,
-        maxStamina: playerSnap.maxStamina,
-        phase: timeSnap.phase,
-        hours: timeSnap.hours,
-        chunks: stream.loadedCount + stream.toLoad.length,
-        message
-      };
-      setHud(hudState);
-      onPlayerUpdate?.(playerSnap);
-      onTimeUpdate?.(timeSnap);
-
-      const stats = devCollector.collect(delta);
-      if (stats) setDevStats(stats);
+      // Throttle React updates (~8 Hz) so we never remount WebGL
+      uiAccum += delta;
+      if (uiAccum >= 0.12) {
+        uiAccum = 0;
+        setHud({
+          ...playerSnap.position,
+          stamina: playerSnap.stamina,
+          maxStamina: playerSnap.maxStamina,
+          phase: timeSnap.phase,
+          hours: timeSnap.hours,
+          chunks: chunkManager.getLoaded().length,
+          message
+        });
+        onPlayerUpdateRef.current?.(playerSnap);
+        onTimeUpdateRef.current?.(timeSnap);
+        const stats = devCollector.collect(delta);
+        if (stats) setDevStats(stats);
+      }
 
       animationId = requestAnimationFrame(render);
     };
 
-    const onClick = () => controls.lock();
+    const onClick = () => {
+      if (!controls.isLocked) controls.lock();
+    };
     const onResize = () => {
+      if (!mount) return;
       resizeCamera(camera, mount.clientWidth, mount.clientHeight);
       renderer.setSize(mount.clientWidth, mount.clientHeight);
     };
@@ -183,10 +198,10 @@ export default function GameCanvas({
       player.onKeyDown(e.code);
       if (e.code === 'F5') {
         e.preventDefault();
-        onSaveRequest?.();
-        message = 'Game saved';
+        onSaveRequestRef.current?.();
+        message = 'Session saved';
       }
-      if (e.key === 'Escape') onEscape?.();
+      if (e.key === 'Escape') onEscapeRef.current?.();
     };
     const onKeyUp = (e) => player.onKeyUp(e.code);
 
@@ -197,17 +212,30 @@ export default function GameCanvas({
     render();
 
     return () => {
+      disposed = true;
       cancelAnimationFrame(animationId);
       renderer.domElement.removeEventListener('click', onClick);
       window.removeEventListener('resize', onResize);
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
       player.resetKeys();
+      if (controls.isLocked) controls.unlock();
+      controls.dispose();
       chunkManager.clear();
+      scene.traverse((obj) => {
+        if (obj.geometry) obj.geometry.dispose();
+        if (obj.material) {
+          if (Array.isArray(obj.material)) obj.material.forEach((m) => m.dispose());
+          else obj.material.dispose?.();
+        }
+      });
       renderer.dispose();
-      if (mount.contains(renderer.domElement)) mount.removeChild(renderer.domElement);
+      renderer.forceContextLoss?.();
+      const gl = renderer.domElement;
+      if (gl.parentNode) gl.parentNode.removeChild(gl);
     };
-  }, [inventory, onEscape, onPlayerUpdate, onSaveRequest, onTimeUpdate, spawn.x, spawn.y, spawn.z]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- single WebGL lifetime
+  }, []);
 
   return (
     <>
@@ -215,8 +243,8 @@ export default function GameCanvas({
       {!ready && (
         <div className="popup-overlay" role="status">
           <div className="popup-card">
-            <h2>Generating open world</h2>
-            <p>Streaming terrain chunks around the player...</p>
+            <h2>Loading framework view</h2>
+            <p>Preparing the demo world surface…</p>
           </div>
         </div>
       )}
@@ -232,17 +260,17 @@ export default function GameCanvas({
             }}
           />
         </div>
-        <p className="muted">Chunks loaded: {hud.chunks}</p>
+        <p className="muted">Chunks: {hud.chunks}</p>
       </aside>
 
       <aside className="dev-panel" aria-label="Developer panel">
-        <h3>Dev / Open World</h3>
+        <h3>Dev</h3>
         <p>FPS: {devStats.fps}</p>
         <p>Frame: {devStats.frameTimeMs} ms</p>
-        <p>Draw calls: {devStats.drawCalls}</p>
-        <p>Time: {hud.hours?.toFixed?.(1) ?? hud.hours}h ({hud.phase})</p>
+        <p>Draw: {devStats.drawCalls}</p>
+        <p>Time: {Number(hud.hours).toFixed(1)}h ({hud.phase})</p>
         <p>
-          Pos: {hud.x?.toFixed?.(1)}, {hud.y?.toFixed?.(1)}, {hud.z?.toFixed?.(1)}
+          Pos: {Number(hud.x).toFixed(1)}, {Number(hud.y).toFixed(1)}, {Number(hud.z).toFixed(1)}
         </p>
       </aside>
 

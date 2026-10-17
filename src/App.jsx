@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import GameCanvas from './components/GameCanvas';
 import InventoryPanel from './components/InventoryPanel';
 import worldData from './data/worldData.json';
@@ -11,23 +11,32 @@ import { createEventBus } from './core/EventBus';
 
 export default function App() {
   const bus = useMemo(() => createEventBus(), []);
-  const gameState = useMemo(() => createGameState({
-    player: {
-      health: worldData.player.attributes.health,
-      maxHealth: worldData.player.attributes.health,
-      stamina: worldData.player.attributes.stamina,
-      maxStamina: worldData.player.attributes.stamina,
-      magicka: worldData.player.attributes.magicka,
-      maxMagicka: worldData.player.attributes.magicka
-    }
-  }), []);
+  const gameState = useMemo(
+    () =>
+      createGameState({
+        player: {
+          health: worldData.player.attributes.health,
+          maxHealth: worldData.player.attributes.health,
+          stamina: worldData.player.attributes.stamina,
+          maxStamina: worldData.player.attributes.stamina,
+          magicka: worldData.player.attributes.magicka,
+          maxMagicka: worldData.player.attributes.magicka
+        }
+      }),
+    []
+  );
   const saveSystem = useMemo(() => createSaveSystem(), []);
   const quests = useMemo(() => createQuestManager(worldData.quests), []);
   const inventory = useMemo(() => createInventory(gameData.inventoryItems), []);
 
   const [inventoryState, setInventoryState] = useState(() => inventory.getSnapshot());
   const [questList, setQuestList] = useState(() => quests.list());
-  const [stateSnap, setStateSnap] = useState(() => gameState.getSnapshot());
+  const [vitals, setVitals] = useState({
+    health: worldData.player.attributes.health,
+    maxHealth: worldData.player.attributes.health,
+    stamina: worldData.player.attributes.stamina,
+    maxStamina: worldData.player.attributes.stamina
+  });
   const [timePhase, setTimePhase] = useState('day');
   const [timeHours, setTimeHours] = useState(8);
   const [screen, setScreen] = useState('menu');
@@ -35,22 +44,20 @@ export default function App() {
   const [showPauseMenu, setShowPauseMenu] = useState(false);
   const [toast, setToast] = useState('');
 
+  const timeRef = useRef({ hours: 8, phase: 'day' });
+
   useEffect(() => inventory.subscribe(setInventoryState), [inventory]);
   useEffect(() => quests.subscribe(setQuestList), [quests]);
-  useEffect(() => gameState.subscribe(setStateSnap), [gameState]);
 
-  const currentHealth = stateSnap.player.health;
-  const maxHealth = stateSnap.player.maxHealth;
-  const stamina = stateSnap.player.stamina;
-  const maxStamina = stateSnap.player.maxStamina;
-  const healthPct = Math.max(0, Math.min(100, (currentHealth / maxHealth) * 100));
-  const staminaPct = Math.max(0, Math.min(100, (stamina / maxStamina) * 100));
+  const healthPct = Math.max(0, Math.min(100, (vitals.health / vitals.maxHealth) * 100));
+  const staminaPct = Math.max(0, Math.min(100, (vitals.stamina / vitals.maxStamina) * 100));
 
   const flash = useCallback((msg) => {
     setToast(msg);
     window.setTimeout(() => setToast(''), 2200);
   }, []);
 
+  // Throttled from canvas — do not push full gameState React updates every frame
   const handlePlayerUpdate = useCallback((playerSnap) => {
     gameState.setPlayer({
       position: playerSnap.position,
@@ -59,24 +66,33 @@ export default function App() {
       isSprinting: playerSnap.isSprinting,
       isGrounded: playerSnap.isGrounded
     });
+    setVitals((prev) => ({
+      ...prev,
+      stamina: playerSnap.stamina,
+      maxStamina: playerSnap.maxStamina
+    }));
   }, [gameState]);
 
   const handleTimeUpdate = useCallback((timeSnap) => {
+    timeRef.current = { hours: timeSnap.hours, phase: timeSnap.phase };
     setTimePhase(timeSnap.phase);
     setTimeHours(timeSnap.hours);
-    gameState.patch({ time: { hours: timeSnap.hours, phase: timeSnap.phase } });
-  }, [gameState]);
+  }, []);
 
   const handleSave = useCallback(() => {
     const result = saveSystem.save({
       player: gameState.getSnapshot().player,
       inventory: inventory.getSnapshot(),
       quests: quests.list(),
-      time: { hours: timeHours, phase: timePhase }
+      time: timeRef.current
     });
     flash(result.ok ? 'World saved' : `Save failed: ${result.error}`);
     bus.emit('save', result);
-  }, [bus, flash, gameState, inventory, quests, saveSystem, timeHours, timePhase]);
+  }, [bus, flash, gameState, inventory, quests, saveSystem]);
+
+  const handleEscape = useCallback(() => {
+    setShowPauseMenu((v) => !v);
+  }, []);
 
   const handleLoad = useCallback(() => {
     const result = saveSystem.load();
@@ -85,7 +101,7 @@ export default function App() {
       return;
     }
     if (result.data.player) gameState.setPlayer(result.data.player);
-    flash('Save loaded (position applies next session spawn)');
+    flash('Save loaded');
     bus.emit('load', result.data);
   }, [bus, flash, gameState, saveSystem]);
 
@@ -109,7 +125,7 @@ export default function App() {
         <div className="menu-card">
           <p className="eyebrow">Open World Framework</p>
           <h1>New World Online</h1>
-          <p>Explore a streamed open world with day/night, stamina, quests, and save/load.</p>
+          <p>Engine interface demo — chunk streaming, day/night, vitals, save/load.</p>
           <div className="menu-actions">
             <button type="button" className="primary-btn" onClick={() => startGame(false)}>
               Enter World
@@ -130,7 +146,7 @@ export default function App() {
       <GameCanvas
         inventory={inventory}
         spawn={worldData.player.spawn}
-        onEscape={() => setShowPauseMenu((v) => !v)}
+        onEscape={handleEscape}
         onPlayerUpdate={handlePlayerUpdate}
         onTimeUpdate={handleTimeUpdate}
         onSaveRequest={handleSave}
@@ -142,14 +158,30 @@ export default function App() {
         <div className="healthbar-track">
           <div className="healthbar-fill" style={{ width: `${healthPct}%` }} />
         </div>
-        <p>{Math.round(currentHealth)} / {maxHealth}</p>
+        <p>
+          {Math.round(vitals.health)} / {vitals.maxHealth}
+        </p>
         <div className="bar-label">Stamina</div>
         <div className="staminabar-track">
           <div className="staminabar-fill" style={{ width: `${staminaPct}%` }} />
         </div>
-        <p>{Math.round(stamina)} / {maxStamina}</p>
-        <p className="muted">Time: {timeHours.toFixed(1)}h · {timePhase}</p>
-        <button type="button" className="hud-btn" onClick={() => gameState.setPlayer({ health: Math.max(0, currentHealth - 15) })}>
+        <p>
+          {Math.round(vitals.stamina)} / {vitals.maxStamina}
+        </p>
+        <p className="muted">
+          Time: {timeHours.toFixed(1)}h · {timePhase}
+        </p>
+        <button
+          type="button"
+          className="hud-btn"
+          onClick={() =>
+            setVitals((v) => {
+              const health = Math.max(0, v.health - 15);
+              gameState.setPlayer({ health });
+              return { ...v, health };
+            })
+          }
+        >
           Take Damage
         </button>
       </aside>
@@ -158,8 +190,12 @@ export default function App() {
         <button type="button" className="hud-btn" onClick={() => setShowInventory((v) => !v)}>
           {showInventory ? 'Close Inventory' : 'Inventory'}
         </button>
-        <button type="button" className="hud-btn" onClick={handleSave}>Save (F5)</button>
-        <button type="button" className="hud-btn" onClick={() => setShowPauseMenu(true)}>Menu</button>
+        <button type="button" className="hud-btn" onClick={handleSave}>
+          Save (F5)
+        </button>
+        <button type="button" className="hud-btn" onClick={() => setShowPauseMenu(true)}>
+          Menu
+        </button>
       </div>
 
       <aside className="journal-panel" aria-label="Adventure journal">
@@ -168,20 +204,24 @@ export default function App() {
         <div className="journal-section">
           <h4>Active Quests</h4>
           <ul>
-            {questList.filter((q) => q.status === 'Active' || q.status === 'Completed').map((quest) => (
-              <li key={quest.id}>
-                <strong>{quest.title}</strong> — {quest.status}
-                <br />
-                <span className="muted">{quest.stage}</span>
-              </li>
-            ))}
+            {questList
+              .filter((q) => q.status === 'Active' || q.status === 'Completed')
+              .map((quest) => (
+                <li key={quest.id}>
+                  <strong>{quest.title}</strong> — {quest.status}
+                  <br />
+                  <span className="muted">{quest.stage}</span>
+                </li>
+              ))}
           </ul>
         </div>
         <div className="journal-section">
           <h4>Skills</h4>
           <ul>
             {worldData.player.skills.map((skill) => (
-              <li key={skill.id}>{skill.name} ({skill.level})</li>
+              <li key={skill.id}>
+                {skill.name} ({skill.level})
+              </li>
             ))}
           </ul>
         </div>
@@ -194,7 +234,9 @@ export default function App() {
           <div className="popup-card">
             <div className="popup-header">
               <h2>Inventory</h2>
-              <button type="button" className="hud-btn" onClick={() => setShowInventory(false)}>Close</button>
+              <button type="button" className="hud-btn" onClick={() => setShowInventory(false)}>
+                Close
+              </button>
             </div>
             <InventoryPanel items={inventoryState.slots} />
           </div>
@@ -205,11 +247,17 @@ export default function App() {
         <div className="popup-overlay" role="dialog" aria-modal="true">
           <div className="popup-card exit-menu-card">
             <h2>Paused</h2>
-            <p>Open world session — save before leaving if needed.</p>
+            <p>Framework session — save before leaving if needed.</p>
             <div className="menu-actions">
-              <button type="button" className="primary-btn" onClick={handleSave}>Save Game</button>
-              <button type="button" className="hud-btn" onClick={() => setShowPauseMenu(false)}>Resume</button>
-              <button type="button" className="hud-btn" onClick={exitToMenu}>Exit to Menu</button>
+              <button type="button" className="primary-btn" onClick={handleSave}>
+                Save
+              </button>
+              <button type="button" className="hud-btn" onClick={() => setShowPauseMenu(false)}>
+                Resume
+              </button>
+              <button type="button" className="hud-btn" onClick={exitToMenu}>
+                Exit to Menu
+              </button>
             </div>
           </div>
         </div>
