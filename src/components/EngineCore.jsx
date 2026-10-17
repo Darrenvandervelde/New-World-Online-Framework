@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
 /**
- * AI Cardinal — futuristic 3D heart core with multi-layer particles.
+ * AI Cardinal core — circular heart made of particles (holographic command style).
  * States: idle | processing | active | warning | error
  */
 export default function EngineCore({
@@ -27,296 +27,238 @@ export default function EngineCore({
     let animationId = 0;
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color('#01040d');
-    scene.fog = new THREE.FogExp2(0x01040d, 0.038);
+    scene.background = new THREE.Color('#021018');
+    scene.fog = new THREE.FogExp2(0x021018, 0.04);
 
     const w = mount.clientWidth || 640;
     const h = mount.clientHeight || 420;
-    const camera = new THREE.PerspectiveCamera(38, w / h, 0.1, 120);
-    camera.position.set(0.15, 0.55, 5.1);
+    const camera = new THREE.PerspectiveCamera(40, w / h, 0.1, 100);
+    camera.position.set(0, 0.35, 5.2);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.setSize(w, h);
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.15;
+    renderer.toneMappingExposure = 1.2;
     mount.appendChild(renderer.domElement);
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
-    controls.dampingFactor = 0.055;
-    controls.minDistance = 2.6;
-    controls.maxDistance = 10;
-    controls.target.set(0, 0, 0);
+    controls.dampingFactor = 0.05;
+    controls.minDistance = 2.8;
+    controls.maxDistance = 9;
 
-    // Lighting — neon command centre
-    scene.add(new THREE.AmbientLight(0x1e293b, 0.55));
-    const key = new THREE.PointLight(0x22d3ee, 3.2, 28);
-    key.position.set(3.2, 2.6, 3.4);
+    scene.add(new THREE.AmbientLight(0x0e7490, 0.35));
+    const key = new THREE.PointLight(0x22d3ee, 2.8, 30);
+    key.position.set(2.5, 2.5, 4);
     scene.add(key);
-    const fill = new THREE.PointLight(0xf43f5e, 2.4, 22);
-    fill.position.set(-2.8, -0.6, 2.2);
+    const fill = new THREE.PointLight(0x67e8f9, 1.4, 20);
+    fill.position.set(-3, 0, 2);
     scene.add(fill);
-    const rim = new THREE.PointLight(0xa78bfa, 1.8, 20);
-    rim.position.set(0.5, 3.2, -2.5);
-    scene.add(rim);
-    const coreGlow = new THREE.PointLight(0xfb7185, 1.2, 6);
-    scene.add(coreGlow);
 
-    // —— Heart mesh ——
-    const heartShape = new THREE.Shape();
-    heartShape.moveTo(0, 0.42);
-    heartShape.bezierCurveTo(0, 0.68, -0.42, 0.95, -0.9, 0.64);
-    heartShape.bezierCurveTo(-1.4, 0.22, -1.25, -0.42, -0.48, -0.9);
-    heartShape.bezierCurveTo(-0.16, -1.1, 0, -1.2, 0, -1.2);
-    heartShape.bezierCurveTo(0, -1.2, 0.16, -1.1, 0.48, -0.9);
-    heartShape.bezierCurveTo(1.25, -0.42, 1.4, 0.22, 0.9, 0.64);
-    heartShape.bezierCurveTo(0.42, 0.95, 0, 0.68, 0, 0.42);
-
-    const extrude = new THREE.ExtrudeGeometry(heartShape, {
-      depth: 0.7,
-      bevelEnabled: true,
-      bevelThickness: 0.12,
-      bevelSize: 0.08,
-      bevelSegments: 5,
-      curveSegments: 28
-    });
-    extrude.center();
-
-    const heartMat = new THREE.MeshPhysicalMaterial({
-      color: '#e11d48',
-      emissive: '#9f1239',
-      emissiveIntensity: 0.55,
-      metalness: 0.35,
-      roughness: 0.22,
-      clearcoat: 1,
-      clearcoatRoughness: 0.15,
-      sheen: 0.5,
-      sheenColor: new THREE.Color('#fb7185')
-    });
-    const heart = new THREE.Mesh(extrude, heartMat);
-    scene.add(heart);
-
-    // Wireframe shell (futuristic cage)
-    const wire = new THREE.Mesh(
-      extrude.clone(),
-      new THREE.MeshBasicMaterial({
-        color: '#67e8f9',
-        wireframe: true,
-        transparent: true,
-        opacity: 0.12
-      })
-    );
-    wire.scale.setScalar(1.08);
-    heart.add(wire);
-
-    // Energy vessels
-    const vesselMat = new THREE.MeshStandardMaterial({
-      color: '#fda4af',
-      emissive: '#e11d48',
-      emissiveIntensity: 1.1,
-      roughness: 0.25,
-      metalness: 0.4
-    });
-    for (let i = 0; i < 10; i++) {
-      const a = (i / 10) * Math.PI * 2;
-      const tube = new THREE.Mesh(
-        new THREE.TubeGeometry(
-          new THREE.CatmullRomCurve3([
-            new THREE.Vector3(0, 0.15, 0.15),
-            new THREE.Vector3(Math.cos(a) * 0.45, 0.45 + (i % 3) * 0.08, Math.sin(a) * 0.35),
-            new THREE.Vector3(Math.cos(a) * 0.3, 0.95, Math.sin(a) * 0.2)
-          ]),
-          32,
-          0.02,
-          6,
-          false
-        ),
-        vesselMat
-      );
-      heart.add(tube);
-    }
-
-    // Holo rings + dashed data rings
-    const makeRing = (radius, color, emissive, tube = 0.016) =>
-      new THREE.Mesh(
-        new THREE.TorusGeometry(radius, tube, 12, 128),
-        new THREE.MeshStandardMaterial({
-          color,
-          emissive,
-          emissiveIntensity: 0.7,
-          metalness: 0.85,
-          roughness: 0.2,
-          transparent: true,
-          opacity: 0.9
-        })
-      );
-
-    const ringA = makeRing(1.7, '#22d3ee', '#0891b2');
-    ringA.rotation.x = Math.PI / 2.25;
-    const ringB = makeRing(2.05, '#a78bfa', '#6d28d9', 0.012);
-    ringB.rotation.x = Math.PI / 1.7;
-    const ringC = makeRing(2.4, '#38bdf8', '#0284c7', 0.01);
-    ringC.rotation.x = Math.PI / 2.05;
-    const ringD = makeRing(2.75, '#f472b6', '#be185d', 0.008);
-    ringD.rotation.x = Math.PI / 2.5;
-    scene.add(ringA, ringB, ringC, ringD);
-
-    // Vertical holo pillars
-    const pillarGeo = new THREE.CylinderGeometry(0.015, 0.015, 3.6, 6);
-    const pillarMat = new THREE.MeshBasicMaterial({
-      color: '#22d3ee',
-      transparent: true,
-      opacity: 0.25
-    });
-    for (let i = 0; i < 8; i++) {
-      const a = (i / 8) * Math.PI * 2;
-      const p = new THREE.Mesh(pillarGeo, pillarMat);
-      p.position.set(Math.cos(a) * 2.9, 0, Math.sin(a) * 2.9);
-      scene.add(p);
-    }
-
-    // —— Particle systems ——
-    const sprite = (() => {
-      const size = 64;
+    // Soft glow sprite
+    const spriteTex = (() => {
+      const size = 128;
       const c = document.createElement('canvas');
       c.width = size;
       c.height = size;
       const ctx = c.getContext('2d');
-      const g = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+      const g = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
       g.addColorStop(0, 'rgba(255,255,255,1)');
-      g.addColorStop(0.35, 'rgba(180,240,255,0.55)');
+      g.addColorStop(0.25, 'rgba(103,232,249,0.7)');
+      g.addColorStop(0.55, 'rgba(34,211,238,0.25)');
       g.addColorStop(1, 'rgba(0,0,0,0)');
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, size, size);
-      const tex = new THREE.CanvasTexture(c);
-      return tex;
+      return new THREE.CanvasTexture(c);
     })();
 
-    function makeField(count, radiusMin, radiusMax, color, size) {
+    /** Fibonacci sphere → circular particle heart core */
+    function spherePoints(count, radius) {
       const positions = new Float32Array(count * 3);
-      const phases = new Float32Array(count);
-      const radii = new Float32Array(count);
+      const seeds = new Float32Array(count);
+      const golden = Math.PI * (3 - Math.sqrt(5));
       for (let i = 0; i < count; i++) {
-        const r = radiusMin + Math.random() * (radiusMax - radiusMin);
-        const theta = Math.random() * Math.PI * 2;
-        const phi = Math.acos(2 * Math.random() - 1);
-        positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
-        positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
-        positions[i * 3 + 2] = r * Math.cos(phi);
-        phases[i] = Math.random() * Math.PI * 2;
-        radii[i] = r;
+        const y = 1 - (i / (count - 1)) * 2;
+        const r = Math.sqrt(Math.max(0, 1 - y * y));
+        const theta = golden * i;
+        positions[i * 3] = Math.cos(theta) * r * radius;
+        positions[i * 3 + 1] = y * radius;
+        positions[i * 3 + 2] = Math.sin(theta) * r * radius;
+        seeds[i] = Math.random();
       }
+      return { positions, seeds };
+    }
+
+    function makePoints(count, radius, color, size) {
+      const { positions, seeds } = spherePoints(count, radius);
       const geo = new THREE.BufferGeometry();
       geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      geo.setAttribute('seed', new THREE.BufferAttribute(seeds, 1));
+      // Keep base positions for pulse morph
+      const base = positions.slice();
       const mat = new THREE.PointsMaterial({
-        map: sprite,
+        map: spriteTex,
         color,
         size,
         transparent: true,
-        opacity: 0.85,
+        opacity: 0.95,
         depthWrite: false,
         blending: THREE.AdditiveBlending,
         sizeAttenuation: true
       });
-      return { points: new THREE.Points(geo, mat), phases, radii, count, geo };
+      return { points: new THREE.Points(geo, mat), base, count, geo, mat };
     }
 
-    const fieldOrbit = makeField(520, 1.4, 3.4, '#67e8f9', 0.07);
-    const fieldInner = makeField(280, 0.6, 1.5, '#fb7185', 0.05);
-    const fieldOuter = makeField(360, 3.2, 5.2, '#c4b5fd', 0.06);
-    const fieldSparks = makeField(160, 0.9, 2.2, '#ffffff', 0.04);
-    scene.add(fieldOrbit.points, fieldInner.points, fieldOuter.points, fieldSparks.points);
+    // Multi-shell circular core (the “heart”)
+    const coreDense = makePoints(900, 1.05, '#67e8f9', 0.08);
+    const coreMid = makePoints(600, 1.35, '#22d3ee', 0.06);
+    const coreOuter = makePoints(400, 1.7, '#a5f3fc', 0.05);
+    const coreAccent = makePoints(220, 0.7, '#ffffff', 0.045);
+    scene.add(coreDense.points, coreMid.points, coreOuter.points, coreAccent.points);
 
-    // Rising data-stream columns (particle beams)
-    const streamCount = 90;
-    const streamPos = new Float32Array(streamCount * 3);
-    const streamPhase = new Float32Array(streamCount);
-    for (let i = 0; i < streamCount; i++) {
-      const a = Math.random() * Math.PI * 2;
-      const r = 1.8 + Math.random() * 1.4;
-      streamPos[i * 3] = Math.cos(a) * r;
-      streamPos[i * 3 + 1] = (Math.random() - 0.5) * 3;
-      streamPos[i * 3 + 2] = Math.sin(a) * r;
-      streamPhase[i] = Math.random() * Math.PI * 2;
+    // Orbital ring particles (flat circle belt)
+    const ringCount = 280;
+    const ringPos = new Float32Array(ringCount * 3);
+    const ringBase = new Float32Array(ringCount * 3);
+    for (let i = 0; i < ringCount; i++) {
+      const a = (i / ringCount) * Math.PI * 2;
+      const r = 2.15 + (Math.random() - 0.5) * 0.08;
+      ringPos[i * 3] = Math.cos(a) * r;
+      ringPos[i * 3 + 1] = (Math.random() - 0.5) * 0.08;
+      ringPos[i * 3 + 2] = Math.sin(a) * r;
     }
-    const streamGeo = new THREE.BufferGeometry();
-    streamGeo.setAttribute('position', new THREE.BufferAttribute(streamPos, 3));
-    const streamMat = new THREE.PointsMaterial({
-      map: sprite,
+    ringBase.set(ringPos);
+    const ringGeo = new THREE.BufferGeometry();
+    ringGeo.setAttribute('position', new THREE.BufferAttribute(ringPos, 3));
+    const ringMat = new THREE.PointsMaterial({
+      map: spriteTex,
       color: '#22d3ee',
-      size: 0.08,
+      size: 0.055,
       transparent: true,
       opacity: 0.9,
       depthWrite: false,
       blending: THREE.AdditiveBlending
     });
-    const streams = new THREE.Points(streamGeo, streamMat);
+    const ringPts = new THREE.Points(ringGeo, ringMat);
+    scene.add(ringPts);
+
+    // Second tilted ring
+    const ring2 = ringPts.clone();
+    ring2.geometry = ringGeo.clone();
+    ring2.material = ringMat.clone();
+    ring2.material.color.set('#67e8f9');
+    ring2.rotation.x = Math.PI / 3.2;
+    scene.add(ring2);
+
+    // Ambient field
+    const fieldCount = 500;
+    const fieldPos = new Float32Array(fieldCount * 3);
+    for (let i = 0; i < fieldCount; i++) {
+      fieldPos[i * 3] = (Math.random() - 0.5) * 10;
+      fieldPos[i * 3 + 1] = (Math.random() - 0.5) * 6;
+      fieldPos[i * 3 + 2] = (Math.random() - 0.5) * 10;
+    }
+    const fieldGeo = new THREE.BufferGeometry();
+    fieldGeo.setAttribute('position', new THREE.BufferAttribute(fieldPos, 3));
+    const field = new THREE.Points(
+      fieldGeo,
+      new THREE.PointsMaterial({
+        map: spriteTex,
+        color: '#0e7490',
+        size: 0.04,
+        transparent: true,
+        opacity: 0.5,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending
+      })
+    );
+    scene.add(field);
+
+    // Rising streams
+    const streamN = 80;
+    const streamPos = new Float32Array(streamN * 3);
+    for (let i = 0; i < streamN; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const r = 2.4 + Math.random() * 1.2;
+      streamPos[i * 3] = Math.cos(a) * r;
+      streamPos[i * 3 + 1] = (Math.random() - 0.5) * 3;
+      streamPos[i * 3 + 2] = Math.sin(a) * r;
+    }
+    const streamGeo = new THREE.BufferGeometry();
+    streamGeo.setAttribute('position', new THREE.BufferAttribute(streamPos, 3));
+    const streams = new THREE.Points(
+      streamGeo,
+      new THREE.PointsMaterial({
+        map: spriteTex,
+        color: '#22d3ee',
+        size: 0.07,
+        transparent: true,
+        opacity: 0.75,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending
+      })
+    );
     scene.add(streams);
 
-    // Shockwave disc (pulses with heartbeat)
-    const shock = new THREE.Mesh(
-      new THREE.RingGeometry(0.3, 0.55, 64),
-      new THREE.MeshBasicMaterial({
-        color: '#22d3ee',
-        transparent: true,
-        opacity: 0,
-        side: THREE.DoubleSide,
-        depthWrite: false,
-        blending: THREE.AdditiveBlending
-      })
-    );
-    shock.rotation.x = -Math.PI / 2;
-    scene.add(shock);
+    // Soft torus guides (thin hologram circles)
+    const guideMat = new THREE.MeshBasicMaterial({
+      color: '#22d3ee',
+      transparent: true,
+      opacity: 0.18,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
+    });
+    const guide1 = new THREE.Mesh(new THREE.TorusGeometry(2.15, 0.008, 8, 100), guideMat);
+    guide1.rotation.x = Math.PI / 2;
+    const guide2 = new THREE.Mesh(new THREE.TorusGeometry(2.55, 0.006, 8, 100), guideMat.clone());
+    guide2.rotation.x = Math.PI / 2.4;
+    scene.add(guide1, guide2);
 
-    // Scan plane
-    const scan = new THREE.Mesh(
-      new THREE.PlaneGeometry(4.2, 4.2),
-      new THREE.MeshBasicMaterial({
-        color: '#22d3ee',
-        transparent: true,
-        opacity: 0.05,
-        side: THREE.DoubleSide,
-        depthWrite: false,
-        blending: THREE.AdditiveBlending
-      })
-    );
-    scene.add(scan);
-
-    // Floor grid (tech)
-    const grid = new THREE.GridHelper(12, 24, 0x164e63, 0x0f172a);
-    grid.position.y = -1.8;
-    grid.material.transparent = true;
-    grid.material.opacity = 0.45;
+    const grid = new THREE.GridHelper(14, 28, 0x0e7490, 0x082f49);
+    grid.position.y = -1.9;
+    if (Array.isArray(grid.material)) {
+      grid.material.forEach((m) => {
+        m.transparent = true;
+        m.opacity = 0.35;
+      });
+    } else {
+      grid.material.transparent = true;
+      grid.material.opacity = 0.35;
+    }
     scene.add(grid);
 
     const clock = new THREE.Clock();
-    const STATE_COLORS = {
-      idle: { body: '#e11d48', emissive: '#9f1239', intensity: 0.45, spark: '#67e8f9' },
-      processing: { body: '#f43f5e', emissive: '#be123c', intensity: 0.85, spark: '#a5f3fc' },
-      active: { body: '#fb7185', emissive: '#e11d48', intensity: 1.05, spark: '#ffffff' },
-      warning: { body: '#f59e0b', emissive: '#b45309', intensity: 0.75, spark: '#fde68a' },
-      error: { body: '#ef4444', emissive: '#7f1d1d', intensity: 0.55, spark: '#fca5a5' }
+    const STATE = {
+      idle: { core: '#67e8f9', mid: '#22d3ee', outer: '#a5f3fc' },
+      processing: { core: '#a5f3fc', mid: '#22d3ee', outer: '#e0f2fe' },
+      active: { core: '#ffffff', mid: '#67e8f9', outer: '#22d3ee' },
+      warning: { core: '#fde68a', mid: '#fbbf24', outer: '#f59e0b' },
+      error: { core: '#fca5a5', mid: '#f87171', outer: '#ef4444' }
     };
 
-    function orbitField(field, t, speed, act) {
-      const pos = field.geo.attributes.position.array;
-      for (let i = 0; i < field.count; i++) {
-        const phase = field.phases[i] + t * speed;
-        const r = field.radii[i] * (1 + Math.sin(phase * 0.7) * 0.03 * (1 + act));
-        const y = pos[i * 3 + 1] + Math.sin(phase + i) * 0.0015;
-        // soft rebuild from spherical-ish drift
-        const x0 = pos[i * 3];
-        const z0 = pos[i * 3 + 2];
-        const ang = Math.atan2(z0, x0) + speed * 0.01 * (1 + act * 0.5);
-        const xz = Math.sqrt(x0 * x0 + z0 * z0) || r;
-        pos[i * 3] = Math.cos(ang) * xz;
-        pos[i * 3 + 1] = y;
-        pos[i * 3 + 2] = Math.sin(ang) * xz;
+    function pulseShell(shell, t, rate, act, spin) {
+      const pos = shell.geo.attributes.position.array;
+      const base = shell.base;
+      const beat =
+        1 +
+        Math.sin(t * Math.PI * 2 * rate) * (0.07 + act * 0.06) +
+        Math.sin(t * Math.PI * 4 * rate) * 0.025;
+      for (let i = 0; i < shell.count; i++) {
+        const i3 = i * 3;
+        pos[i3] = base[i3] * beat;
+        pos[i3 + 1] = base[i3 + 1] * beat;
+        pos[i3 + 2] = base[i3 + 2] * beat;
       }
-      field.geo.attributes.position.needsUpdate = true;
-      field.points.rotation.y = t * speed * 0.15;
+      shell.geo.attributes.position.needsUpdate = true;
+      shell.points.rotation.y = t * spin;
+      shell.mat.size = shell.mat.userData.baseSize * (0.9 + act * 0.4 + (beat - 1) * 2);
     }
+
+    coreDense.mat.userData.baseSize = 0.08;
+    coreMid.mat.userData.baseSize = 0.06;
+    coreOuter.mat.userData.baseSize = 0.05;
+    coreAccent.mat.userData.baseSize = 0.045;
 
     const render = () => {
       if (disposed) return;
@@ -324,59 +266,46 @@ export default function EngineCore({
       const st = statusRef.current || 'idle';
       const rate = pulseRef.current || 1;
       const act = Math.min(1, Math.max(0, activityRef.current || 0));
-      const palette = STATE_COLORS[st] || STATE_COLORS.idle;
+      const colors = STATE[st] || STATE.idle;
 
-      const beat =
-        1 +
-        Math.sin(t * Math.PI * 2 * rate) * (0.06 + act * 0.05) +
-        Math.sin(t * Math.PI * 4 * rate) * 0.022;
+      coreDense.mat.color.set(colors.core);
+      coreMid.mat.color.set(colors.mid);
+      coreOuter.mat.color.set(colors.outer);
+      coreAccent.mat.opacity = 0.7 + act * 0.3;
 
-      heart.scale.setScalar(beat);
-      heart.rotation.y = t * 0.22;
-      heart.rotation.x = Math.sin(t * 0.32) * 0.1;
-      wire.material.opacity = 0.08 + act * 0.18 + (beat - 1) * 1.5;
+      pulseShell(coreDense, t, rate, act, 0.15);
+      pulseShell(coreMid, t, rate, act, -0.1);
+      pulseShell(coreOuter, t, rate, act, 0.08);
+      pulseShell(coreAccent, t, rate * 1.2, act, 0.25);
 
-      heartMat.color.set(palette.body);
-      heartMat.emissive.set(palette.emissive);
-      heartMat.emissiveIntensity = palette.intensity + (beat - 1) * 4 + act * 0.4;
-      coreGlow.intensity = 0.8 + act * 1.5 + (beat - 1) * 8;
-      coreGlow.color.set(palette.emissive);
+      ringPts.rotation.y = t * 0.35;
+      ring2.rotation.z = t * 0.28;
+      ringMat.opacity = 0.65 + act * 0.3;
 
-      ringA.rotation.z = t * 0.6;
-      ringB.rotation.z = -t * 0.42;
-      ringC.rotation.z = t * 0.25;
-      ringD.rotation.z = -t * 0.18;
-      ringA.material.emissiveIntensity = 0.5 + act * 0.8;
-      ringB.material.opacity = 0.55 + act * 0.35;
+      // Animate primary ring radius slightly with beat
+      const beat = 1 + Math.sin(t * Math.PI * 2 * rate) * 0.04;
+      const rp = ringGeo.attributes.position.array;
+      for (let i = 0; i < ringCount; i++) {
+        const i3 = i * 3;
+        rp[i3] = ringBase[i3] * beat;
+        rp[i3 + 1] = ringBase[i3 + 1];
+        rp[i3 + 2] = ringBase[i3 + 2] * beat;
+      }
+      ringGeo.attributes.position.needsUpdate = true;
 
-      // Shockwave on each beat peak
-      const beatWave = Math.max(0, Math.sin(t * Math.PI * 2 * rate));
-      shock.scale.setScalar(1 + beatWave * (1.8 + act));
-      shock.material.opacity = beatWave * (0.35 + act * 0.35);
-      shock.material.color.set(palette.spark);
-
-      scan.position.y = Math.sin(t * 1.15) * 1.35;
-      scan.rotation.y = t * 0.35;
-      scan.material.opacity = 0.04 + act * 0.06;
-
-      orbitField(fieldOrbit, t, 0.8 + act, act);
-      orbitField(fieldInner, t, -1.2 - act, act);
-      orbitField(fieldOuter, t, 0.35, act);
-      orbitField(fieldSparks, t, 1.6 + act * 2, act);
-      fieldSparks.points.material.color.set(palette.spark);
-      fieldInner.points.material.opacity = 0.55 + act * 0.4;
-      fieldOrbit.points.material.size = 0.06 + act * 0.04;
-
-      // Rising streams
       const sp = streamGeo.attributes.position.array;
-      for (let i = 0; i < streamCount; i++) {
-        sp[i * 3 + 1] += 0.012 + act * 0.02;
-        if (sp[i * 3 + 1] > 2.2) sp[i * 3 + 1] = -2.2;
+      for (let i = 0; i < streamN; i++) {
+        sp[i * 3 + 1] += 0.014 + act * 0.02;
+        if (sp[i * 3 + 1] > 2.4) sp[i * 3 + 1] = -2.4;
       }
       streamGeo.attributes.position.needsUpdate = true;
-      streamMat.opacity = 0.45 + act * 0.5;
 
-      grid.rotation.y = t * 0.02;
+      field.rotation.y = t * 0.04;
+      guide1.rotation.z = t * 0.2;
+      guide2.rotation.z = -t * 0.15;
+      guide1.scale.setScalar(beat);
+
+      key.intensity = 2.2 + act * 1.5 + Math.sin(t * Math.PI * 2 * rate) * 0.4;
 
       controls.update();
       renderer.render(scene, camera);
@@ -400,7 +329,7 @@ export default function EngineCore({
       cancelAnimationFrame(animationId);
       window.removeEventListener('resize', onResize);
       controls.dispose();
-      sprite.dispose();
+      spriteTex.dispose();
       scene.traverse((obj) => {
         if (obj.geometry) obj.geometry.dispose();
         if (obj.material) {
@@ -416,7 +345,5 @@ export default function EngineCore({
     };
   }, []);
 
-  return (
-    <div className="engine-core" ref={mountRef} aria-label="AI Cardinal 3D heart core" />
-  );
+  return <div className="engine-core" ref={mountRef} aria-label="AI Cardinal particle core" />;
 }
