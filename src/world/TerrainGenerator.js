@@ -1,8 +1,8 @@
 import * as THREE from 'three';
 
 /**
- * Lightweight deterministic height + mesh generator per chunk.
- * No external noise lib — uses layered value noise.
+ * Deterministic height + mesh generator per chunk.
+ * Framework demo terrain — swap heightAt / createChunkMesh for your own world data.
  */
 function hash2(x, z) {
   const s = Math.sin(x * 127.1 + z * 311.7) * 43758.5453;
@@ -37,31 +37,47 @@ function fbm(x, z) {
   return value / norm;
 }
 
+/**
+ * World-space ground height. PlayerController and mesh generation MUST use the same function.
+ * Mild amplitude so the demo surface stays walkable as a framework sample.
+ */
 export function heightAt(worldX, worldZ) {
-  const n = fbm(worldX * 0.03, worldZ * 0.03);
-  return (n - 0.5) * 8;
+  const n = fbm(worldX * 0.02, worldZ * 0.02);
+  return (n - 0.5) * 4;
 }
 
-export function createChunkMesh(cx, cz, chunkSize = 64, resolution = 16) {
-  const segments = resolution;
-  const geometry = new THREE.PlaneGeometry(chunkSize, chunkSize, segments, segments);
+/**
+ * PlaneGeometry is centered on its local origin.
+ * Mesh is placed at chunk center, so world = center + local.
+ */
+export function chunkCenter(cx, cz, chunkSize = 64) {
+  return {
+    x: cx * chunkSize + chunkSize / 2,
+    z: cz * chunkSize + chunkSize / 2
+  };
+}
+
+export function createChunkMesh(cx, cz, chunkSize = 64, resolution = 24) {
+  const geometry = new THREE.PlaneGeometry(chunkSize, chunkSize, resolution, resolution);
   geometry.rotateX(-Math.PI / 2);
 
   const positions = geometry.attributes.position;
   const colors = [];
   const color = new THREE.Color();
+  const center = chunkCenter(cx, cz, chunkSize);
 
   for (let i = 0; i < positions.count; i++) {
     const lx = positions.getX(i);
     const lz = positions.getZ(i);
-    const wx = cx * chunkSize + lx;
-    const wz = cz * chunkSize + lz;
+    // CRITICAL: match mesh.position + local vertex = world sample used by PlayerController
+    const wx = center.x + lx;
+    const wz = center.z + lz;
     const h = heightAt(wx, wz);
     positions.setY(i, h);
 
-    if (h < -1.5) color.set('#1e3a5f');
-    else if (h < 0.5) color.set('#2f6b3a');
-    else if (h < 3) color.set('#4a7c3f');
+    if (h < -1) color.set('#1e3a5f');
+    else if (h < 0.4) color.set('#2f6b3a');
+    else if (h < 1.8) color.set('#4a7c3f');
     else color.set('#8a8a7a');
 
     colors.push(color.r, color.g, color.b);
@@ -69,39 +85,39 @@ export function createChunkMesh(cx, cz, chunkSize = 64, resolution = 16) {
 
   geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
   geometry.computeVertexNormals();
+  positions.needsUpdate = true;
 
   const material = new THREE.MeshStandardMaterial({
     vertexColors: true,
     roughness: 0.92,
-    metalness: 0.05,
-    flatShading: false
+    metalness: 0.05
   });
 
   const mesh = new THREE.Mesh(geometry, material);
-  mesh.position.set(cx * chunkSize + chunkSize / 2, 0, cz * chunkSize + chunkSize / 2);
+  mesh.position.set(center.x, 0, center.z);
   mesh.receiveShadow = true;
   mesh.userData = { type: 'chunk', cx, cz };
 
   return mesh;
 }
 
-export function createWorldProps(cx, cz, chunkSize = 64, count = 6) {
+export function createWorldProps(cx, cz, chunkSize = 64, count = 5) {
   const group = new THREE.Group();
   const seed = hash2(cx * 12.3, cz * 45.7);
+  const center = chunkCenter(cx, cz, chunkSize);
 
   for (let i = 0; i < count; i++) {
-    const ox = (hash2(cx + i, cz + i * 2) - 0.5) * chunkSize * 0.8;
-    const oz = (hash2(cz + i * 3, cx + i) - 0.5) * chunkSize * 0.8;
-    const wx = cx * chunkSize + chunkSize / 2 + ox;
-    const wz = cz * chunkSize + chunkSize / 2 + oz;
+    const ox = (hash2(cx + i, cz + i * 2) - 0.5) * chunkSize * 0.75;
+    const oz = (hash2(cz + i * 3, cx + i) - 0.5) * chunkSize * 0.75;
+    const wx = center.x + ox;
+    const wz = center.z + oz;
     const h = heightAt(wx, wz);
-    if (h < -1) continue;
+    if (h < -0.8) continue;
 
     const kind = hash2(i + seed, cx + cz);
     let mesh;
 
     if (kind < 0.55) {
-      // Tree
       const trunk = new THREE.Mesh(
         new THREE.CylinderGeometry(0.2, 0.3, 2.2, 6),
         new THREE.MeshStandardMaterial({ color: '#5c3a21', roughness: 1 })
@@ -115,16 +131,14 @@ export function createWorldProps(cx, cz, chunkSize = 64, count = 6) {
       mesh = new THREE.Group();
       mesh.add(trunk, leaves);
     } else if (kind < 0.8) {
-      // Rock
       mesh = new THREE.Mesh(
-        new THREE.DodecahedronGeometry(0.5 + kind * 0.4, 0),
+        new THREE.DodecahedronGeometry(0.45 + kind * 0.35, 0),
         new THREE.MeshStandardMaterial({ color: '#6b7280', roughness: 1, flatShading: true })
       );
-      mesh.position.y = 0.35;
+      mesh.position.y = 0.3;
     } else {
-      // Crystal / interest point
       mesh = new THREE.Mesh(
-        new THREE.OctahedronGeometry(0.45, 0),
+        new THREE.OctahedronGeometry(0.4, 0),
         new THREE.MeshStandardMaterial({
           color: '#22d3ee',
           emissive: '#0891b2',
@@ -132,7 +146,7 @@ export function createWorldProps(cx, cz, chunkSize = 64, count = 6) {
           roughness: 0.3
         })
       );
-      mesh.position.y = 0.6;
+      mesh.position.y = 0.5;
       mesh.userData.collectible = true;
     }
 
@@ -142,6 +156,6 @@ export function createWorldProps(cx, cz, chunkSize = 64, count = 6) {
     group.add(mesh);
   }
 
-  group.position.set(cx * chunkSize + chunkSize / 2, 0, cz * chunkSize + chunkSize / 2);
+  group.position.set(center.x, 0, center.z);
   return group;
 }

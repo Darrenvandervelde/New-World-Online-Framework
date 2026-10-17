@@ -2,7 +2,8 @@ import * as THREE from 'three';
 import { heightAt } from '../world/TerrainGenerator';
 
 /**
- * First-person style movement bound to a camera + PointerLockControls.
+ * Framework player movement bound to a camera + PointerLockControls.
+ * Inject a custom `getGroundHeight(x, z)` when you replace demo terrain.
  */
 export function createPlayerController({
   camera,
@@ -11,7 +12,8 @@ export function createPlayerController({
   sprintSpeed = 11,
   jumpForce = 8,
   gravity = 22,
-  eyeHeight = 1.7
+  eyeHeight = 1.7,
+  getGroundHeight = heightAt
 } = {}) {
   const velocity = new THREE.Vector3();
   const direction = new THREE.Vector3();
@@ -62,7 +64,8 @@ export function createPlayerController({
       velocity.y -= gravity * delta;
       camera.position.y += velocity.y * delta;
 
-      const groundY = heightAt(camera.position.x, camera.position.z) + eyeHeight;
+      // Camera sits at eye height above the same height function the mesh uses
+      const groundY = getGroundHeight(camera.position.x, camera.position.z) + eyeHeight;
       if (camera.position.y <= groundY) {
         camera.position.y = groundY;
         velocity.y = 0;
