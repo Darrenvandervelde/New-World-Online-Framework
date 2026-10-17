@@ -1,74 +1,62 @@
-# New World Online Framework
+# AI Cardinal
 
-Open-world game framework built with **Electron + React + Vite + Three.js**.
+**AI-Powered Game Engine Framework and 3D Interactive Interface**
 
-## Features
+The living **3D heart** is the visual core of the framework. Games attach as **separate interface layers** through the EventBus and `createEngine()` API — they are not hardcoded into the heart.
 
-| System | Description |
-|--------|-------------|
-| **Chunk streaming** | Terrain loads/unloads around the player |
-| **Procedural terrain** | Heightmap + trees, rocks, crystals per chunk |
-| **Day / night cycle** | Sky, fog, and sun intensity over time |
-| **Player controller** | Walk, sprint, jump, stamina, ground snap |
-| **Save / load** | LocalStorage session persistence (F5) |
-| **Quests** | Quest manager with active / completed states |
-| **Inventory** | Stackable items including world materials |
-| **Event bus + game state** | Shared engine/UI communication |
-| **Minimap + HUD** | Vitals, journal, dev stats |
+## Phase 1 (this branch)
 
-## Quick Start
+- Animated 3D heart (orbit / zoom, heartbeat, vessels, rings, particles)
+- Visual states: `idle` · `processing` · `active` · `warning` · `error`
+- Framework dashboard (sidebar, toolbar, modules, diagnostics log)
+- Sample game layer **Sample Pulse** communicating via the engine bus
+- Simulated activity (no external AI key required)
+
+## Quick start
 
 ```bash
+git checkout feature/open-world-engine
 npm install
 npm run dev
 ```
 
-## Scripts
+Electron + Vite open the **Command Centre**. Drag the heart to orbit, scroll to zoom.
 
-- `npm run dev` — Vite + Electron
-- `npm run build` — production renderer build
-- `npm run electron` — Electron only
-- `npm run dist` — package desktop app
+### Try
 
-## Controls
-
-| Key | Action |
-|-----|--------|
-| W A S D / Arrows | Move |
-| Shift | Sprint (uses stamina) |
-| Space | Jump |
-| F5 | Save |
-| Esc | Pause / unlock pointer |
-| Click canvas | Lock pointer |
+1. **Pulse** / **Process** — core reacts; diagnostics log updates  
+2. **Launch sample game** — game layer mounts; **Relay pulse** talks to the core  
+3. **Exit to framework** — layer detaches cleanly  
 
 ## Architecture
 
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/FOLDER_STRUCTURE.md](docs/FOLDER_STRUCTURE.md).
+
 ```txt
-src/
-  core/           EventBus, GameState, TimeSystem, SaveSystem
-  world/          ChunkManager, TerrainGenerator
-  game/           PlayerController, EntityRegistry, QuestManager, inventory, camera
-  components/     GameCanvas, InventoryPanel
-  data/           worldData, items, scenes, objectLogic
-  logic/          dev panel collectors
-electron/         main process + preload
+Game Interface  ──events/API──►  AI Cardinal Framework  ◄──  3D Heart Core
 ```
 
-## Open-world loop
+## Scripts
 
-1. Player moves → `PlayerController` updates position + stamina  
-2. `ChunkManager` decides which chunks to load/unload  
-3. `TerrainGenerator` builds mesh + props for new chunks  
-4. `TimeSystem` advances day/night and drives lighting  
-5. UI subscribes to `GameState` / quests / inventory  
+| Script | Purpose |
+|--------|---------|
+| `npm run dev` | Vite + Electron |
+| `npm run build` | Production renderer |
+| `npm run dist` | Desktop package |
 
-## Extending
+## Roadmap
 
-- **NPCs**: `createEntityRegistry().spawn('npc', { position, dialogue })`
-- **Quests**: pass definitions into `createQuestManager`
-- **New items**: add JSON under `src/data/items/` and import in `gameData.js`
-- **Larger world**: raise `loadRadius` in `ChunkManager` (watch perf)
+| Phase | Focus |
+|-------|--------|
+| 1 | Heart + dashboard + sample game layer |
+| 2 | Module registry, config, diagnostics service |
+| 3 | Stronger game runtime + viewport host |
+| 4 | Provider-agnostic AI interface (demo without keys) |
+| 5 | Assets + plugins |
+| 6 | Tests, security, production docs |
 
-## Security
+## Stack
 
-Electron defaults: `contextIsolation: true`, `nodeIntegration: false`, `sandbox: true`.
+React · Vite · Electron · Three.js (framework-owned WebGL for the heart)
+
+TypeScript / React Three Fiber can be introduced in Phase 2 without changing the layer split.
