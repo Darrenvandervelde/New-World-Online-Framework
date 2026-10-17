@@ -1,11 +1,20 @@
-# Three.js Game Framework (Electron + React + Vite)
+# New World Online Framework
 
-A game-focused desktop framework using:
+Open-world game framework built with **Electron + React + Vite + Three.js**.
 
-- **Electron** for desktop packaging and native shell
-- **React** for UI layers (HUD, menus, overlays)
-- **Vite** for fast dev/build workflows
-- **Three.js** as the rendering/game foundation
+## Features
+
+| System | Description |
+|--------|-------------|
+| **Chunk streaming** | Terrain loads/unloads around the player |
+| **Procedural terrain** | Heightmap + trees, rocks, crystals per chunk |
+| **Day / night cycle** | Sky, fog, and sun intensity over time |
+| **Player controller** | Walk, sprint, jump, stamina, ground snap |
+| **Save / load** | LocalStorage session persistence (F5) |
+| **Quests** | Quest manager with active / completed states |
+| **Inventory** | Stackable items including world materials |
+| **Event bus + game state** | Shared engine/UI communication |
+| **Minimap + HUD** | Vitals, journal, dev stats |
 
 ## Quick Start
 
@@ -16,221 +25,50 @@ npm run dev
 
 ## Scripts
 
-- `npm run dev` — starts Vite and Electron together
-- `npm run build` — builds the renderer app with Vite
-- `npm run preview` — previews the Vite build
-- `npm run electron` — runs Electron directly
-- `npm run dist` — builds and packages desktop app via electron-builder
+- `npm run dev` — Vite + Electron
+- `npm run build` — production renderer build
+- `npm run electron` — Electron only
+- `npm run dist` — package desktop app
 
-## Structure Diagram
-```mermaid
-flowchart TB
+## Controls
 
-    subgraph CLIENT["Player Layer"]
-        A["Desktop Browser"]
-        B["Mobile Browser"]
-        C["Gamepad / Keyboard Input"]
-        D["Touch Controls"]
-    end
+| Key | Action |
+|-----|--------|
+| W A S D / Arrows | Move |
+| Shift | Sprint (uses stamina) |
+| Space | Jump |
+| F5 | Save |
+| Esc | Pause / unlock pointer |
+| Click canvas | Lock pointer |
 
-    subgraph FRONTEND["Frontend - React + Vite"]
-        E["React UI"]
-        F["HUD System"]
-        G["Inventory UI"]
-        H["Settings Menu"]
-        I["Authentication Pages"]
-        J["State Management"]
-    end
-
-    subgraph GAMEENGINE["Three.js Game Engine"]
-        K["Scene Manager"]
-        L["Entity Component System"]
-        M["Player Controller"]
-        N["Physics Engine"]
-        O["Animation System"]
-        P["Audio Engine"]
-        Q["Lighting System"]
-        R["Particle Effects"]
-        S["Raycasting System"]
-        T["Camera Controller"]
-    end
-
-    subgraph WORLD["World Systems"]
-        U["Chunk Loader"]
-        V["Terrain Generator"]
-        W["NPC AI System"]
-        X["Quest System"]
-        Y["Combat System"]
-        Z["Loot System"]
-        AA["Crafting System"]
-        AB["Day Night Cycle"]
-        AC["Weather System"]
-    end
-
-    subgraph NETWORK["Multiplayer Networking"]
-        AD["Socket.IO Client"]
-        AE["Realtime Sync"]
-        AF["Matchmaking"]
-        AG["Lobby System"]
-        AH["Voice Chat"]
-    end
-
-    subgraph BACKEND["Backend API - Express.js"]
-        AI["REST API"]
-        AJ["Authentication Service"]
-        AK["Game Session Service"]
-        AL["Player Data Service"]
-        AM["Inventory Service"]
-        AN["Leaderboard Service"]
-        AO["Chat Service"]
-    end
-
-    subgraph DATABASE["Database Layer"]
-        AP[("PostgreSQL")]
-        AQ["Redis Cache"]
-        AR[("Cloud Storage")]
-    end
-
-    subgraph ASSETS["Asset Pipeline"]
-        AS["GLTF Models"]
-        AT["Textures"]
-        AU["Audio Files"]
-        AV["Shader System"]
-        AW["Animation Files"]
-    end
-
-    subgraph DEVOPS["DevOps & Deployment"]
-        AX["Docker"]
-        AY["NGINX"]
-        AZ["GitHub Actions"]
-        BA["CDN"]
-        BB["Monitoring"]
-        BC["Cloud Hosting"]
-    end
-
-    A --> E
-    B --> E
-    C --> M
-    D --> M
-
-    E --> F
-    E --> G
-    E --> H
-    E --> I
-    E --> J
-
-    J --> K
-
-    K --> L
-    L --> M
-    L --> N
-    L --> O
-    L --> P
-    L --> Q
-    L --> R
-    L --> S
-    L --> T
-
-    K --> U
-    U --> V
-
-    V --> W
-    W --> X
-    X --> Y
-    Y --> Z
-    Z --> AA
-
-    V --> AB
-    V --> AC
-
-    K --> AD
-    AD --> AE
-    AE --> AF
-    AF --> AG
-    AG --> AH
-
-    AD --> AI
-
-    AI --> AJ
-    AI --> AK
-    AI --> AL
-    AI --> AM
-    AI --> AN
-    AI --> AO
-
-    AL --> AP
-    AM --> AP
-    AN --> AP
-
-    AI --> AQ
-    AI --> AR
-
-    K --> AS
-    K --> AT
-    K --> AU
-    K --> AV
-    K --> AW
-
-    AI --> AX
-    AX --> AY
-    AY --> BC
-
-    AZ --> BC
-    BC --> BA
-
-    AI --> BB
-    E --> BB
-```
-
-## Project Structure
+## Architecture
 
 ```txt
-.
-New-World-Online-Framework
-├─ electron
-│  ├─ main.js
-│  └─ preload.js
-├─ index.html
-├─ package-lock.json
-├─ package.json
-├─ PROJECT_DOCUMENTATION.md
-├─ README.md
-├─ src
-│  ├─ App.jsx
-│  ├─ components
-│  │  ├─ GameCanvas.jsx
-│  │  └─ InventoryPanel.jsx
-│  ├─ data
-│  │  ├─ gameData.js
-│  │  ├─ items
-│  │  │  ├─ consumables.json
-│  │  │  ├─ keys.json
-│  │  │  └─ tools.json
-│  │  ├─ items.json
-│  │  ├─ mapConfig.json
-│  │  ├─ modelCatalog.json
-│  │  ├─ objectLogic.json
-│  │  ├─ scenes
-│  │  │  ├─ crystal-gate.json
-│  │  │  ├─ mystic-hills.json
-│  │  │  ├─ scenes.json
-│  │  │  └─ starter-valley.json
-│  │  └─ worldData.json
-│  ├─ game
-│  │  ├─ camera.js
-│  │  └─ inventory.js
-│  ├─ logic
-│  │  └─ devPanelLogic.js
-│  ├─ main.jsx
-│  ├─ models
-│  │  └─ devPanelModel.js
-│  ├─ scenes
-│  │  └─ sceneLoader.js
-│  └─ styles.css
-└─ vite.config.js
+src/
+  core/           EventBus, GameState, TimeSystem, SaveSystem
+  world/          ChunkManager, TerrainGenerator
+  game/           PlayerController, EntityRegistry, QuestManager, inventory, camera
+  components/     GameCanvas, InventoryPanel
+  data/           worldData, items, scenes, objectLogic
+  logic/          dev panel collectors
+electron/         main process + preload
 ```
 
-## Notes
+## Open-world loop
 
-- Security defaults are enabled (`contextIsolation: true`, `nodeIntegration: false`, `sandbox: true`).
-- Start building gameplay in `src/components/GameCanvas.jsx`.
+1. Player moves → `PlayerController` updates position + stamina  
+2. `ChunkManager` decides which chunks to load/unload  
+3. `TerrainGenerator` builds mesh + props for new chunks  
+4. `TimeSystem` advances day/night and drives lighting  
+5. UI subscribes to `GameState` / quests / inventory  
+
+## Extending
+
+- **NPCs**: `createEntityRegistry().spawn('npc', { position, dialogue })`
+- **Quests**: pass definitions into `createQuestManager`
+- **New items**: add JSON under `src/data/items/` and import in `gameData.js`
+- **Larger world**: raise `loadRadius` in `ChunkManager` (watch perf)
+
+## Security
+
+Electron defaults: `contextIsolation: true`, `nodeIntegration: false`, `sandbox: true`.
