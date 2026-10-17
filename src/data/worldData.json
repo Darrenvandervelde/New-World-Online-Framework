@@ -8,18 +8,28 @@
     {
       "id": "main-awakening",
       "title": "Awakening in Emberfall",
-      "stage": "Find the standing stone and attune your sigil.",
-      "status": "Active"
+      "stage": "Explore the open world and attune to a crystal shard.",
+      "status": "Active",
+      "objectives": ["Collect 1 crystal shard"]
     },
     {
       "id": "side-smoke",
       "title": "Smoke Over the Ridge",
       "stage": "Investigate the abandoned campfire near the eastern road.",
-      "status": "Available"
+      "status": "Available",
+      "objectives": ["Reach eastern ridge"]
+    },
+    {
+      "id": "world-survey",
+      "title": "Survey the Wilds",
+      "stage": "Travel across multiple terrain chunks.",
+      "status": "Active",
+      "objectives": ["Visit 3 distant areas"]
     }
   ],
   "player": {
     "archetype": "Spellblade",
+    "spawn": { "x": 8, "y": 1.7, "z": 8 },
     "attributes": {
       "health": 120,
       "magicka": 90,
@@ -28,7 +38,14 @@
     "skills": [
       { "id": "one-handed", "name": "One-Handed", "level": 18 },
       { "id": "destruction", "name": "Destruction", "level": 22 },
-      { "id": "smithing", "name": "Smithing", "level": 12 }
+      { "id": "smithing", "name": "Smithing", "level": 12 },
+      { "id": "exploration", "name": "Exploration", "level": 5 }
     ]
+  },
+  "world": {
+    "name": "Emberfall Wilds",
+    "chunkSize": 64,
+    "loadRadius": 2,
+    "dayLengthSeconds": 480
   }
 }

@@ -1,0 +1,23 @@
+[
+  {
+    "id": "crystal-shard",
+    "name": "Crystal Shard",
+    "description": "A glowing fragment found across the open world.",
+    "maxStack": 50,
+    "stackable": true
+  },
+  {
+    "id": "wood-log",
+    "name": "Wood Log",
+    "description": "Basic crafting material from trees.",
+    "maxStack": 99,
+    "stackable": true
+  },
+  {
+    "id": "stone-chunk",
+    "name": "Stone Chunk",
+    "description": "Rough stone for building and smithing.",
+    "maxStack": 99,
+    "stackable": true
+  }
+]
