@@ -1,79 +1,129 @@
 import EngineCore from './EngineCore';
 
+const NAV = [
+  { id: 'core', label: 'Core' },
+  { id: 'modules', label: 'Modules' },
+  { id: 'games', label: 'Games' },
+  { id: 'ai', label: 'AI (demo)' },
+  { id: 'diagnostics', label: 'Diagnostics' }
+];
+
 const MODULES = [
-  { id: 'event-bus', name: 'Event Bus', desc: 'Pub/sub between core and layers' },
-  { id: 'game-state', name: 'Game State', desc: 'Shared snapshot for UI + systems' },
-  { id: 'time', name: 'Time System', desc: 'Clock / day-night hooks' },
-  { id: 'save', name: 'Save System', desc: 'Session persistence API' },
-  { id: 'world', name: 'World / Chunks', desc: 'Streaming world interface' },
-  { id: 'player', name: 'Player Controller', desc: 'Input + locomotion contract' },
-  { id: 'quests', name: 'Quest Manager', desc: 'Objective pipeline' },
-  { id: 'entities', name: 'Entity Registry', desc: 'Spawn / query world entities' }
+  { id: 'core', name: 'Cardinal Core', status: 'online' },
+  { id: 'renderer', name: 'Cardinal Renderer', status: 'online' },
+  { id: 'events', name: 'Event System', status: 'online' },
+  { id: 'state', name: 'State Manager', status: 'online' },
+  { id: 'runtime', name: 'Game Runtime', status: 'ready' },
+  { id: 'ai', name: 'Cardinal AI', status: 'demo' },
+  { id: 'assets', name: 'Asset Manager', status: 'stub' },
+  { id: 'plugins', name: 'Plugin System', status: 'stub' }
 ];
 
 /**
- * Framework interface around the 3D heart core.
- * This is the AI Cardinal / NWO engine shell — not the game itself.
+ * AI Cardinal framework dashboard — heart is the centrepiece.
+ * Game UI is launched separately; it does not live inside the heart component.
  */
 export default function FrameworkShell({
-  coreStatus = 'online',
-  activeLayer = 'framework',
-  onOpenGameLayer,
-  onStayFramework
+  coreStatus = 'idle',
+  activity = 0,
+  logs = [],
+  activeNav = 'core',
+  onNav,
+  onSimulatePulse,
+  onSimulateProcess,
+  onLaunchSampleGame,
+  onSetCoreStatus
 }) {
   return (
-    <div className="framework-shell">
-      <header className="framework-header">
-        <div>
-          <p className="eyebrow">AI Cardinal · Engine Framework</p>
-          <h1>New World Online Core</h1>
-          <p className="lede">
-            3D heart is the runtime core. Game interfaces mount on top through the module bus.
-          </p>
+    <div className="cardinal-shell">
+      <aside className="cardinal-sidebar" aria-label="Navigation">
+        <div className="brand">
+          <span className="brand-mark" />
+          <div>
+            <strong>AI Cardinal</strong>
+            <small>Engine Framework</small>
+          </div>
         </div>
-        <div className="core-status">
-          <span className={`status-dot ${coreStatus}`} />
-          Core {coreStatus}
-        </div>
-      </header>
-
-      <div className="framework-grid">
-        <section className="core-stage" aria-label="Engine core">
-          <EngineCore status={coreStatus} pulseRate={1.1} />
-          <p className="core-caption">Runtime heart · systems pulse through this core</p>
-        </section>
-
-        <section className="module-panel" aria-label="Framework modules">
-          <h2>Framework modules</h2>
-          <ul className="module-list">
-            {MODULES.map((m) => (
-              <li key={m.id}>
-                <strong>{m.name}</strong>
-                <span>{m.desc}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        <section className="layer-panel" aria-label="Interface layers">
-          <h2>Interface layers</h2>
-          <p className="muted">
-            Active layer: <strong>{activeLayer}</strong>
-          </p>
-          <div className="layer-actions">
-            <button type="button" className="primary-btn" onClick={onOpenGameLayer}>
-              Attach game interface
+        <nav>
+          {NAV.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              className={activeNav === item.id ? 'nav-item active' : 'nav-item'}
+              onClick={() => onNav?.(item.id)}
+            >
+              {item.label}
             </button>
-            <button type="button" className="hud-btn" onClick={onStayFramework}>
-              Stay on framework
+          ))}
+        </nav>
+        <div className="sidebar-foot">
+          <span className={`status-dot ${coreStatus}`} />
+          Core · {coreStatus}
+        </div>
+      </aside>
+
+      <div className="cardinal-main">
+        <header className="cardinal-toolbar">
+          <div>
+            <h1>Command Centre</h1>
+            <p className="muted">3D heart core · modular bus · game layers attach on demand</p>
+          </div>
+          <div className="toolbar-actions">
+            <button type="button" className="hud-btn" onClick={() => onSetCoreStatus?.('idle')}>Idle</button>
+            <button type="button" className="hud-btn" onClick={() => onSimulateProcess?.()}>Process</button>
+            <button type="button" className="hud-btn" onClick={() => onSimulatePulse?.()}>Pulse</button>
+            <button type="button" className="primary-btn" onClick={() => onLaunchSampleGame?.()}>
+              Launch sample game
             </button>
           </div>
-          <ol className="layer-steps">
-            <li>Core boots (heart + EventBus)</li>
-            <li>Modules register on the bus</li>
-            <li>Game UI connects as a consumer layer</li>
-          </ol>
-        </section>
+        </header>
+
+        <div className="cardinal-workspace">
+          <section className="heart-stage glass-panel">
+            <EngineCore status={coreStatus} pulseRate={coreStatus === 'processing' ? 1.6 : 1} activity={activity} />
+            <div className="heart-legend">
+              <span>Drag to orbit · scroll to zoom</span>
+              <span className={`pill ${coreStatus}`}>{coreStatus}</span>
+            </div>
+          </section>
+
+          <section className="side-stack">
+            <div className="glass-panel">
+              <h2>Modules</h2>
+              <ul className="module-status-list">
+                {MODULES.map((m) => (
+                  <li key={m.id}>
+                    <span>{m.name}</span>
+                    <em className={`tag ${m.status}`}>{m.status}</em>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="glass-panel">
+              <h2>Diagnostics</h2>
+              <div className="diag-log" role="log" aria-live="polite">
+                {logs.length === 0 && <p className="muted">No events yet. Use toolbar actions.</p>}
+                {logs.map((line, i) => (
+                  <p key={`${line.at}-${i}`}>
+                    <span className="log-time">{line.at}</span> {line.message}
+                  </p>
+                ))}
+              </div>
+            </div>
+
+            <div className="glass-panel">
+              <h2>Game runtime</h2>
+              <p className="muted">
+                Games connect through <code>createEngine()</code> and the EventBus.
+                They never import the heart mesh directly.
+              </p>
+              <button type="button" className="primary-btn" onClick={() => onLaunchSampleGame?.()}>
+                Open sample game layer
+              </button>
+            </div>
+          </section>
+        </div>
       </div>
     </div>
   );

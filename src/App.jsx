@@ -1,267 +1,124 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import GameCanvas from './components/GameCanvas';
-import InventoryPanel from './components/InventoryPanel';
-import worldData from './data/worldData.json';
-import { gameData } from './data/gameData';
-import { createInventory } from './game/inventory';
-import { createGameState } from './core/GameState';
-import { createSaveSystem } from './core/SaveSystem';
-import { createQuestManager } from './game/QuestManager';
-import { createEventBus } from './core/EventBus';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import FrameworkShell from './components/FrameworkShell';
+import SamplePulseGame from './games/sample-pulse/SamplePulseGame';
+import { createEngine } from './framework/createEngine';
 
+function stamp() {
+  return new Date().toLocaleTimeString();
+}
+
+/**
+ * AI Cardinal application shell.
+ * layer = 'framework' | 'game'
+ */
 export default function App() {
-  const bus = useMemo(() => createEventBus(), []);
-  const gameState = useMemo(
-    () =>
-      createGameState({
-        player: {
-          health: worldData.player.attributes.health,
-          maxHealth: worldData.player.attributes.health,
-          stamina: worldData.player.attributes.stamina,
-          maxStamina: worldData.player.attributes.stamina,
-          magicka: worldData.player.attributes.magicka,
-          maxMagicka: worldData.player.attributes.magicka
-        }
-      }),
-    []
-  );
-  const saveSystem = useMemo(() => createSaveSystem(), []);
-  const quests = useMemo(() => createQuestManager(worldData.quests), []);
-  const inventory = useMemo(() => createInventory(gameData.inventoryItems), []);
+  const engine = useMemo(() => createEngine(), []);
+  const [layer, setLayer] = useState('framework');
+  const [coreStatus, setCoreStatus] = useState('idle');
+  const [activity, setActivity] = useState(0);
+  const [logs, setLogs] = useState(() => [
+    { at: stamp(), message: 'Cardinal Core online — modules registered.' }
+  ]);
+  const [activeNav, setActiveNav] = useState('core');
+  const [score, setScore] = useState(0);
+  const [running, setRunning] = useState(true);
 
-  const [inventoryState, setInventoryState] = useState(() => inventory.getSnapshot());
-  const [questList, setQuestList] = useState(() => quests.list());
-  const [vitals, setVitals] = useState({
-    health: worldData.player.attributes.health,
-    maxHealth: worldData.player.attributes.health,
-    stamina: worldData.player.attributes.stamina,
-    maxStamina: worldData.player.attributes.stamina
-  });
-  const [timePhase, setTimePhase] = useState('day');
-  const [timeHours, setTimeHours] = useState(8);
-  const [screen, setScreen] = useState('menu');
-  const [showInventory, setShowInventory] = useState(false);
-  const [showPauseMenu, setShowPauseMenu] = useState(false);
-  const [toast, setToast] = useState('');
-
-  const timeRef = useRef({ hours: 8, phase: 'day' });
-
-  useEffect(() => inventory.subscribe(setInventoryState), [inventory]);
-  useEffect(() => quests.subscribe(setQuestList), [quests]);
-
-  const healthPct = Math.max(0, Math.min(100, (vitals.health / vitals.maxHealth) * 100));
-  const staminaPct = Math.max(0, Math.min(100, (vitals.stamina / vitals.maxStamina) * 100));
-
-  const flash = useCallback((msg) => {
-    setToast(msg);
-    window.setTimeout(() => setToast(''), 2200);
+  const pushLog = useCallback((message) => {
+    setLogs((prev) => [{ at: stamp(), message }, ...prev].slice(0, 40));
   }, []);
 
-  // Throttled from canvas — do not push full gameState React updates every frame
-  const handlePlayerUpdate = useCallback((playerSnap) => {
-    gameState.setPlayer({
-      position: playerSnap.position,
-      stamina: playerSnap.stamina,
-      maxStamina: playerSnap.maxStamina,
-      isSprinting: playerSnap.isSprinting,
-      isGrounded: playerSnap.isGrounded
-    });
-    setVitals((prev) => ({
-      ...prev,
-      stamina: playerSnap.stamina,
-      maxStamina: playerSnap.maxStamina
-    }));
-  }, [gameState]);
+  useEffect(() => {
+    const offReady = engine.bus.on('core:ready', () => pushLog('EventBus: core:ready'));
+    const offPulse = engine.bus.on('core:pulse', () => pushLog('EventBus: core:pulse'));
+    const offAttach = engine.bus.on('layer:attach', (p) => pushLog(`Layer attached: ${p?.name}`));
+    const offDetach = engine.bus.on('layer:detach', (p) => pushLog(`Layer detached: ${p?.name}`));
+    return () => {
+      offReady();
+      offPulse();
+      offAttach();
+      offDetach();
+    };
+  }, [engine, pushLog]);
 
-  const handleTimeUpdate = useCallback((timeSnap) => {
-    timeRef.current = { hours: timeSnap.hours, phase: timeSnap.phase };
-    setTimePhase(timeSnap.phase);
-    setTimeHours(timeSnap.hours);
-  }, []);
-
-  const handleSave = useCallback(() => {
-    const result = saveSystem.save({
-      player: gameState.getSnapshot().player,
-      inventory: inventory.getSnapshot(),
-      quests: quests.list(),
-      time: timeRef.current
-    });
-    flash(result.ok ? 'World saved' : `Save failed: ${result.error}`);
-    bus.emit('save', result);
-  }, [bus, flash, gameState, inventory, quests, saveSystem]);
-
-  const handleEscape = useCallback(() => {
-    setShowPauseMenu((v) => !v);
-  }, []);
-
-  const handleLoad = useCallback(() => {
-    const result = saveSystem.load();
-    if (!result.ok) {
-      flash(result.error || 'No save found');
-      return;
-    }
-    if (result.data.player) gameState.setPlayer(result.data.player);
-    flash('Save loaded');
-    bus.emit('load', result.data);
-  }, [bus, flash, gameState, saveSystem]);
-
-  const startGame = (useSave = false) => {
-    if (useSave) handleLoad();
-    setScreen('game');
-    setShowInventory(false);
-    setShowPauseMenu(false);
-    quests.start('main-awakening');
+  const simulatePulse = () => {
+    setCoreStatus('active');
+    setActivity(0.85);
+    engine.pulse({ source: 'dashboard' });
+    pushLog('Simulated engine pulse (no AI API).');
+    window.setTimeout(() => {
+      setActivity(0.2);
+      setCoreStatus('idle');
+    }, 900);
   };
 
-  const exitToMenu = () => {
-    setScreen('menu');
-    setShowInventory(false);
-    setShowPauseMenu(false);
+  const simulateProcess = () => {
+    setCoreStatus('processing');
+    setActivity(0.6);
+    pushLog('Simulated AI activity (demo mode — no external model).');
+    window.setTimeout(() => {
+      setCoreStatus('idle');
+      setActivity(0.15);
+      pushLog('Processing cycle complete.');
+    }, 1600);
   };
 
-  if (screen === 'menu') {
+  const launchSampleGame = () => {
+    engine.attachLayer('sample-pulse', { kind: 'game' });
+    setLayer('game');
+    setRunning(true);
+    setCoreStatus('active');
+    pushLog('Sample Pulse game layer launched.');
+  };
+
+  const exitGame = () => {
+    engine.bus.emit('layer:detach', { name: 'sample-pulse' });
+    setLayer('framework');
+    setCoreStatus('idle');
+    setActivity(0.1);
+    pushLog('Returned to framework shell.');
+  };
+
+  const relayPulse = () => {
+    if (!running) return;
+    setScore((s) => s + 1);
+    engine.pulse({ source: 'sample-pulse' });
+    setCoreStatus('active');
+    setActivity(1);
+    pushLog('Game → core: pulse relayed.');
+    window.setTimeout(() => setActivity(0.25), 700);
+  };
+
+  if (layer === 'game') {
     return (
-      <main className="menu-screen">
-        <div className="menu-card">
-          <p className="eyebrow">Open World Framework</p>
-          <h1>New World Online</h1>
-          <p>Engine interface demo — chunk streaming, day/night, vitals, save/load.</p>
-          <div className="menu-actions">
-            <button type="button" className="primary-btn" onClick={() => startGame(false)}>
-              Enter World
-            </button>
-            {saveSystem.hasSave() && (
-              <button type="button" className="hud-btn" onClick={() => startGame(true)}>
-                Continue Save
-              </button>
-            )}
-          </div>
-        </div>
-      </main>
+      <SamplePulseGame
+        engineStatus={coreStatus}
+        score={score}
+        running={running}
+        onPulseCore={relayPulse}
+        onPause={() => {
+          setRunning(false);
+          pushLog('Game paused via runtime control.');
+        }}
+        onResume={() => {
+          setRunning(true);
+          pushLog('Game resumed.');
+        }}
+        onExit={exitGame}
+      />
     );
   }
 
   return (
-    <main className="game-screen">
-      <GameCanvas
-        inventory={inventory}
-        spawn={worldData.player.spawn}
-        onEscape={handleEscape}
-        onPlayerUpdate={handlePlayerUpdate}
-        onTimeUpdate={handleTimeUpdate}
-        onSaveRequest={handleSave}
-      />
-
-      <aside className="healthbar-panel" aria-label="Vitals">
-        <h3>Vitals</h3>
-        <div className="bar-label">Health</div>
-        <div className="healthbar-track">
-          <div className="healthbar-fill" style={{ width: `${healthPct}%` }} />
-        </div>
-        <p>
-          {Math.round(vitals.health)} / {vitals.maxHealth}
-        </p>
-        <div className="bar-label">Stamina</div>
-        <div className="staminabar-track">
-          <div className="staminabar-fill" style={{ width: `${staminaPct}%` }} />
-        </div>
-        <p>
-          {Math.round(vitals.stamina)} / {vitals.maxStamina}
-        </p>
-        <p className="muted">
-          Time: {timeHours.toFixed(1)}h · {timePhase}
-        </p>
-        <button
-          type="button"
-          className="hud-btn"
-          onClick={() =>
-            setVitals((v) => {
-              const health = Math.max(0, v.health - 15);
-              gameState.setPlayer({ health });
-              return { ...v, health };
-            })
-          }
-        >
-          Take Damage
-        </button>
-      </aside>
-
-      <div className="game-hud">
-        <button type="button" className="hud-btn" onClick={() => setShowInventory((v) => !v)}>
-          {showInventory ? 'Close Inventory' : 'Inventory'}
-        </button>
-        <button type="button" className="hud-btn" onClick={handleSave}>
-          Save (F5)
-        </button>
-        <button type="button" className="hud-btn" onClick={() => setShowPauseMenu(true)}>
-          Menu
-        </button>
-      </div>
-
-      <aside className="journal-panel" aria-label="Adventure journal">
-        <h3>Journal</h3>
-        <p>Build: {worldData.player.archetype}</p>
-        <div className="journal-section">
-          <h4>Active Quests</h4>
-          <ul>
-            {questList
-              .filter((q) => q.status === 'Active' || q.status === 'Completed')
-              .map((quest) => (
-                <li key={quest.id}>
-                  <strong>{quest.title}</strong> — {quest.status}
-                  <br />
-                  <span className="muted">{quest.stage}</span>
-                </li>
-              ))}
-          </ul>
-        </div>
-        <div className="journal-section">
-          <h4>Skills</h4>
-          <ul>
-            {worldData.player.skills.map((skill) => (
-              <li key={skill.id}>
-                {skill.name} ({skill.level})
-              </li>
-            ))}
-          </ul>
-        </div>
-      </aside>
-
-      {toast && <div className="toast">{toast}</div>}
-
-      {showInventory && (
-        <div className="popup-overlay" role="dialog" aria-modal="true">
-          <div className="popup-card">
-            <div className="popup-header">
-              <h2>Inventory</h2>
-              <button type="button" className="hud-btn" onClick={() => setShowInventory(false)}>
-                Close
-              </button>
-            </div>
-            <InventoryPanel items={inventoryState.slots} />
-          </div>
-        </div>
-      )}
-
-      {showPauseMenu && (
-        <div className="popup-overlay" role="dialog" aria-modal="true">
-          <div className="popup-card exit-menu-card">
-            <h2>Paused</h2>
-            <p>Framework session — save before leaving if needed.</p>
-            <div className="menu-actions">
-              <button type="button" className="primary-btn" onClick={handleSave}>
-                Save
-              </button>
-              <button type="button" className="hud-btn" onClick={() => setShowPauseMenu(false)}>
-                Resume
-              </button>
-              <button type="button" className="hud-btn" onClick={exitToMenu}>
-                Exit to Menu
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </main>
+    <FrameworkShell
+      coreStatus={coreStatus}
+      activity={activity}
+      logs={logs}
+      activeNav={activeNav}
+      onNav={setActiveNav}
+      onSimulatePulse={simulatePulse}
+      onSimulateProcess={simulateProcess}
+      onLaunchSampleGame={launchSampleGame}
+      onSetCoreStatus={setCoreStatus}
+    />
   );
 }
